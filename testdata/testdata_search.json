@@ -1,0 +1,22 @@
+[
+  {
+    "query": "",
+    "expect_navigation": false,
+    "description": "Empty search"
+  },
+  {
+    "query": "велосипед",
+    "expect_results": true,
+    "description": "Common product query",
+    "min_results": 1
+  },
+  {
+    "query": "!!!###",
+    "description": "Invalid characters"
+  },
+  {
+    "query": "a",
+    "expect_results": true,
+    "description": "Minimum length"
+  }
+]
