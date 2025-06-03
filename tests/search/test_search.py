@@ -16,10 +16,10 @@ def test_search_query(main_page, case):
     expect_navigation = case.get("expect_navigation", True)
 
     with allure.step(f"{description}. Query:{query}"):
-        main_page.click_search_button()
-        main_page.insert_search(query)
+        main_page.header_top.click_search_button()
+        main_page.search_engine.insert_search(query)
         try:
-            main_page.click_submit_search_button()
+            search_results_page = main_page.search_engine.click_submit_search_button()
         except Exception:
             allure.attach(
                 main_page.driver.get_screenshot_as_png(),
@@ -32,7 +32,7 @@ def test_search_query(main_page, case):
 
         else:
             if expect_results:
-                assert main_page.number_of_search_results() >= min_results, f"No results for query: {query}"
+                assert search_results_page.number_of_search_results() >= min_results, f"No results for query: {query}"
 
         allure.attach(
             main_page.driver.get_screenshot_as_png(),
