@@ -1,6 +1,5 @@
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -10,7 +9,7 @@ from pages.components.header_nav import HeaderNav
 from pages.components.search_engine import SearchEngine
 
 class BasePage:
-    def __init__(self, driver: WebDriver):
+    def __init__(self, driver: WebDriver) -> None:
         self.driver = driver
         self.base_url = BASE_URL
         self.header_top = HeaderTop(driver, self.wait)
@@ -21,13 +20,13 @@ class BasePage:
     def wait(self) -> WebDriverWait:
         return WebDriverWait(self.driver, timeout=5)
 
-    def open(self):
+    def open(self) -> None:
         self.driver.get(BASE_URL)
 
-    def find_element(self, locator):
+    def find_element(self, locator: tuple[str, str]):
         return self.driver.find_element(*locator)
 
-    def find_elements(self, locator):
+    def find_elements(self, locator: tuple[str, str]):
         return self.driver.find_elements(*locator)
 
     def url_changed_from_base(self) -> bool:

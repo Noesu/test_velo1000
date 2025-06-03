@@ -1,9 +1,7 @@
 import allure
-import json
 import pytest_check as check
 
 from pages.main_page import MainPage
-from utils.json_loader import load_testdata_json
 
 
 @allure.title("Main page check")

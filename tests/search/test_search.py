@@ -1,6 +1,5 @@
 import allure
 import pytest
-import pytest_check as check
 
 from utils.json_loader import load_testdata_json
 

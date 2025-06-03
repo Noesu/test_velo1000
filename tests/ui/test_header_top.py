@@ -43,7 +43,7 @@ def check_logo(main_page):
         )
         check.equal(logo_link, main_page.base_url, f"Unexpected logo link: {logo_link}")
 
-def check_menu_items(main_page):
+def check_menu_items(main_page) -> None:
     actual_top_header_menu: list[tuple[str, str]] = main_page.header_top.get_top_header_menu_items()
 
     with allure.step("Top header menu has correct items"):

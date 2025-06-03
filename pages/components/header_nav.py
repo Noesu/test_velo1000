@@ -13,7 +13,7 @@ class HeaderNav:
     NAV_HEADER_SUBMENU = (By.CSS_SELECTOR, "ul.navbar__submenu li.navbar__submenu-item a.navbar__submenu-link")
 
 
-    def __init__(self, driver, wait):
+    def __init__(self, driver, wait) -> None:
         self.driver = driver
         self.wait = wait
 
@@ -52,7 +52,7 @@ class HeaderNav:
         except TimeoutException:
             return None
 
-    def get_nav_header_submenu_items(self):
+    def get_nav_header_submenu_items(self) -> list[Optional[str, str]]:
         try:
             elements: list[WebElement] = self.wait.until(
                 EC.presence_of_all_elements_located(self.NAV_HEADER_SUBMENU)

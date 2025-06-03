@@ -6,7 +6,6 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from typing import Optional
 
-# from pages.base_page import BasePage
 
 class HeaderTop:
     LOGO = (By.CSS_SELECTOR, "a.logo-image")
@@ -15,7 +14,7 @@ class HeaderTop:
     SEARCH_BUTTON = (By.CSS_SELECTOR, "div.button-header.button-search")
     SEARCH_FIELD = (By.ID, "input__search")
 
-    def __init__(self, driver, wait):
+    def __init__(self, driver, wait) -> None:
         self.driver = driver
         self.wait = wait
 
