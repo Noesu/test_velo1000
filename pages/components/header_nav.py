@@ -52,7 +52,7 @@ class HeaderNav:
         except TimeoutException:
             return None
 
-    def get_nav_header_submenu_items(self) -> list[Optional[str, str]]:
+    def get_nav_header_submenu_items(self) -> list[dict[str, str]]:
         try:
             elements: list[WebElement] = self.wait.until(
                 EC.presence_of_all_elements_located(self.NAV_HEADER_SUBMENU)

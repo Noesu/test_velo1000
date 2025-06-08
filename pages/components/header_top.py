@@ -13,6 +13,8 @@ class HeaderTop:
     TOP_HEADER_HIDDEN_ELEMENTS = (By.CSS_SELECTOR, ".hidden-menu animate__animated")
     SEARCH_BUTTON = (By.CSS_SELECTOR, "div.button-header.button-search")
     SEARCH_FIELD = (By.ID, "input__search")
+    PROFILE_MENU_ITEMS = (By.CSS_SELECTOR, "div.button-header.button-profile .profile-popup__link")
+    LOGIN_BUTTON = (By.CSS_SELECTOR, "div.button-header.button-acc")
 
     def __init__(self, driver, wait) -> None:
         self.driver = driver
@@ -81,3 +83,14 @@ class HeaderTop:
 
     def click_search_button(self) -> None:
         self.wait.until(EC.element_to_be_clickable(self.SEARCH_BUTTON)).click()
+
+    def get_profile_menu_items(self) -> list[tuple[str, Optional[str]]]:
+        try:
+            items = self.wait.until(EC.presence_of_all_elements_located(self.PROFILE_MENU_ITEMS))
+            return [(item.get_attribute("textContent"), item.get_attribute("href")) for item in items]
+        except TimeoutException:
+            return []
+
+    def click_login_button(self):
+        login_button: WebElement = self.wait.until(EC.element_to_be_clickable(self.LOGIN_BUTTON))
+        login_button.click()

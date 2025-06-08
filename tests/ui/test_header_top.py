@@ -2,6 +2,7 @@ import allure
 import json
 import pytest_check as check
 
+from pages.components.auth_modal import AuthModalComponent
 from utils.json_loader import load_testdata_json
 
 
@@ -43,6 +44,7 @@ def check_logo(main_page):
         )
         check.equal(logo_link, main_page.base_url, f"Unexpected logo link: {logo_link}")
 
+
 def check_menu_items(main_page) -> None:
     actual_top_header_menu: list[tuple[str, str]] = main_page.header_top.get_top_header_menu_items()
 
@@ -58,11 +60,11 @@ def check_menu_items(main_page) -> None:
             attachment_type=allure.attachment_type.JSON
         )
 
+
 @allure.feature("Smoke-tests")
 @allure.story("Search button")
 @allure.title("Test search bar opens with search button and closes with close button")
 def test_search_button(main_page) -> None:
-
     with allure.step("Search button is present"):
         check.is_true(main_page.header_top.search_button_present(), "Search button is not present")
 
@@ -84,5 +86,45 @@ def test_search_button(main_page) -> None:
         main_page.search_engine.click_cancel_search_button()
         assert not main_page.search_engine.search_field_present(), "Search field does not close"
 
+
+@allure.feature("Smoke-tests")
+@allure.story("Profile menu")
+@allure.title("Test profile menu contains all necessary items")
+def test_profile_menu(main_page) -> None:
+    actual_profile_menu: list[tuple[str, str]] = main_page.header_top.get_profile_menu_items()
+    expected_profile_menu = load_testdata_json("expected_profile_menu.json")
+
+    expected_texts = [item["text"] for item in expected_profile_menu]
+    expected_hrefs = {item["text"]: item["href"] for item in expected_profile_menu}
+
+    with allure.step("Profile menu has correct items"):
+        for text, href in actual_profile_menu:
+            if check.is_in(text, expected_texts, f"Unexpected top header menu item: {text}"):
+                expected_href = expected_hrefs[text]
+                check.is_true(href.endswith(expected_href), f"Unexpected top header url: {href}")
+        allure.attach(
+            json.dumps(actual_profile_menu, ensure_ascii=False, indent=2),
+            name="actual_top_header_menu",
+            attachment_type=allure.attachment_type.JSON
+        )
+
+
+@allure.feature("Smoke-tests")
+@allure.story("Authorization/registration modal")
+@allure.title("Modal window is shown after clicking login button")
+def test_login_button(main_page) -> None:
+    with allure.step("Modal window is showing up after login button click"):
+        main_page.header_top.click_login_button()
+
+        auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
+        modal_window = auth_modal.get_modal_window()
+
+        check.is_true(modal_window, "Modal window doesn't showing up")
+
+        allure.attach(
+            modal_window.screenshot_as_png,
+            name="modal_window",
+            attachment_type=allure.attachment_type.PNG
+        )
 
 
