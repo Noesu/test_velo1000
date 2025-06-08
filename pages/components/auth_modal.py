@@ -113,6 +113,13 @@ class AuthModalComponent:
         except Exception as e:
             return str(e)
 
+    def auth_submit_btn_is_clickable(self) -> bool:
+        try:
+            self.wait.until(EC.element_to_be_clickable(self.AUTH_SUBMIT_BTN))
+            return True
+        except Exception:
+            return False
+
     def get_auth_submit_btn_text_and_value(self) -> Optional[tuple[Optional[str], Optional[str]]]:
         try:
             button = self.wait.until(EC.element_to_be_clickable(self.AUTH_SUBMIT_BTN))
@@ -176,6 +183,13 @@ class AuthModalComponent:
             return link.get_attribute("href")
         except TimeoutException:
             return None
+
+    def reg_submit_btn_is_clickable(self) -> bool:
+        try:
+            self.wait.until(EC.element_to_be_clickable(self.REG_SUBMIT_BTN))
+            return True
+        except Exception:
+            return False
 
     def get_reg_submit_btn_text_and_value(self) -> Optional[tuple[Optional[str], Optional[str]]]:
         try:

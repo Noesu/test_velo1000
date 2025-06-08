@@ -1,240 +1,322 @@
-import time
-
 import allure
-import pytest_check as check
+import pytest
 
 from pages.components.auth_modal import AuthModalComponent
+from pages.main_page import MainPage
 
 
-@allure.feature("Login modal")
-@allure.story("Authorization tab layout")
-def test_modal_auth_tab_elements_present(main_page):
+@pytest.fixture(scope="class", autouse=True)
+def open_auth_modal(request, main_page):
+    tab = request.param
+    request.cls.tab = tab
+    main_page.header_top.click_login_button()
+    auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
+    if tab == "register":
+        auth_modal.switch_modal_tab_to_registration()
+    request.cls.main_page = main_page
+    request.cls.auth_modal = auth_modal
+
+@allure.suite("Modal Window Tests")
+@allure.feature("Login Modal")
+@allure.story("Authorization Tab Layout")
+@pytest.mark.usefixtures("open_auth_modal")
+@pytest.mark.parametrize("open_auth_modal", ["auth"], indirect=True)
+class TestAuthorizationTab:
+    main_page: MainPage
+    auth_modal: AuthModalComponent
+
     EXPECTED_AUTH_TAB_TITLE = "Авторизация"
     EXPECTED_AUTH_EMAIL_PLACEHOLDER = "Эл. почта"
     EXPECTED_AUTH_PASSWORD_PLACEHOLDER = "Пароль"
     EXPECTED_AUTH_FORGOT_PASSWORD_LINK = "/local/ajax/auth.php?forgot_password=yes&backurl=%2Flocal%2Fajax%2Fauth.php"
     EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE = "Войти"
+    EXPECTED_REG_TAB_LINK = "/local/ajax/auth.php?register=yes&backurl=%2Flocal%2Fajax%2Fauth.php"
 
-    main_page.header_top.click_login_button()
-    auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
+    @allure.title("Modal window")
+    @allure.description("Verifies that the login modal is opened and visible to the user")
+    def test_modal_is_displayed(self):
+        modal = self.auth_modal.get_modal_window()
+        allure.attach(modal.screenshot_as_png,
+                      name="Modal screenshot",
+                      attachment_type=allure.attachment_type.PNG
+                      )
+        assert modal, "Modal doesn't showing up"
 
-    with allure.step("Authorization tab is open"):
-        modal_authorization_tab = auth_modal.get_modal_window()
-        check.is_true(modal_authorization_tab, "Authorization tab doesn't showing up")
-        allure.attach(
-            modal_authorization_tab.screenshot_as_png,
-            name="modal_authorization_tab",
-            attachment_type=allure.attachment_type.PNG
-        )
-
-    with allure.step("Title is correct"):
-        modal_tab_title = auth_modal.get_modal_name()
-        check.equal(modal_tab_title,
-                    EXPECTED_AUTH_TAB_TITLE.upper(),
-                    f"Unexpected modal title: '{modal_tab_title}'. "
-                    f"Expected: '{EXPECTED_AUTH_TAB_TITLE.upper()}'.")
+    @allure.title("Title")
+    @allure.description("Checks if the title matches the expected value")
+    def test_title(self):
+        modal_tab_title = self.auth_modal.get_modal_name()
         allure.attach(modal_tab_title,
-            name="Authorization tab title",
-            attachment_type=allure.attachment_type.TEXT
+                      name="Authorization tab title",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert modal_tab_title == self.EXPECTED_AUTH_TAB_TITLE.upper(), (
+            f"Unexpected modal title: '{modal_tab_title}'. "
+            f"Expected: '{self.EXPECTED_AUTH_TAB_TITLE.upper()}'."
         )
 
-    with allure.step("Email field is visible and has correct placeholder"):
-        check.is_true(auth_modal.get_auth_email_field(), "Email field not found")
-        email_placeholder = auth_modal.get_auth_email_placeholder_text()
-        check.equal(email_placeholder,
-                    EXPECTED_AUTH_EMAIL_PLACEHOLDER,
-                    f"Unexpected email placeholder text: '{email_placeholder}'. "
-                    f"Expected: '{EXPECTED_AUTH_EMAIL_PLACEHOLDER}'."
-                    )
-        allure.attach(email_placeholder,
-            name="Email placeholder",
-            attachment_type=allure.attachment_type.TEXT
+    @allure.title("Email field")
+    @allure.description("Checks that the email field is rendered in the authorization form")
+    def test_email_field_exists(self):
+        assert self.auth_modal.get_auth_email_field(), "Email field not found"
+
+    @allure.title("Email field placeholder")
+    @allure.description("Checks if the placeholder in the email field matches the expected value")
+    def test_email_field_placeholder(self):
+        placeholder = self.auth_modal.get_auth_email_placeholder_text()
+        allure.attach(placeholder,
+                      name="Email placeholder",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert placeholder == self.EXPECTED_AUTH_EMAIL_PLACEHOLDER, (
+            f"Unexpected email placeholder text: '{placeholder}'. "
+            f"Expected: '{self.EXPECTED_AUTH_EMAIL_PLACEHOLDER}'."
         )
 
-    with allure.step("Password field is visible, has correct placeholder and visibility button"):
-        check.is_true(auth_modal.get_auth_password_field(), "Password field not found")
-        password_placeholder = auth_modal.get_auth_password_placeholder_text()
-        check.equal(password_placeholder,
-                    EXPECTED_AUTH_PASSWORD_PLACEHOLDER,
-                    f"Unexpected password placeholder text: '{password_placeholder}'. "
-                    f"Expected: '{EXPECTED_AUTH_PASSWORD_PLACEHOLDER}'."
-                    )
-        check.is_true(auth_modal.get_auth_password_visibility_btn(), "Password visibility button not found")
+    @allure.title("Password field")
+    @allure.description("Checks that the password field is visible")
+    def test_password_field_exists(self):
+        assert self.auth_modal.get_auth_password_field(), "Password field not found"
+
+    @allure.title("Password field placeholder text")
+    @allure.description("Checks if the placeholder in the password field matches the expected value")
+    def test_password_field_placeholder(self):
+        password_placeholder = self.auth_modal.get_auth_password_placeholder_text()
         allure.attach(password_placeholder,
-            name="Password placeholder",
-            attachment_type=allure.attachment_type.TEXT
+                      name="Password placeholder",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert password_placeholder == self.EXPECTED_AUTH_PASSWORD_PLACEHOLDER, (
+            f"Unexpected password placeholder text: '{password_placeholder}'. "
+            f"Expected: '{self.EXPECTED_AUTH_PASSWORD_PLACEHOLDER}'."
         )
 
-    with allure.step("Remember me switch is clickable"):
-        check.is_true(auth_modal.get_auth_remember_me_switch(), "Remember me switch not clickable")
+    @allure.title("Password field visibility button")
+    @allure.description("Checks if the password field has visibility_btn")
+    def test_password_field_visibility_btn(self):
+        assert self.auth_modal.get_auth_password_visibility_btn(), "Password visibility button not found"
 
-    with allure.step("Forgot password link is correct"):
-        forgot_password_link = auth_modal.get_auth_forgot_password_link()
-        check.is_true(forgot_password_link.endswith(EXPECTED_AUTH_FORGOT_PASSWORD_LINK),
-                    f"Unexpected forgot password link: '{forgot_password_link}'. "
-                    f"Expected: '{EXPECTED_AUTH_FORGOT_PASSWORD_LINK}'.")
-        allure.attach(forgot_password_link,
-            name="Forgot password link",
-            attachment_type=allure.attachment_type.TEXT
+    @allure.title("Remember me switch")
+    @allure.description("Checks if the remember me switch is clickable")
+    def test_remember_me_switch(self):
+        assert self.auth_modal.get_auth_remember_me_switch(), "Remember me switch not clickable"
+
+    @allure.title("Forgot password link")
+    @allure.description("Checks if the forgot password link is correct")
+    def test_forgot_password_link(self):
+        link = self.auth_modal.get_auth_forgot_password_link()
+        allure.attach(link,
+                      name="Forgot password link",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert link.endswith(self.EXPECTED_AUTH_FORGOT_PASSWORD_LINK), (
+            f"Unexpected forgot password link: '{link}'. "
+            f"Expected: '{self.EXPECTED_AUTH_FORGOT_PASSWORD_LINK}'."
         )
 
-    with allure.step("Submit button is clickable and have proper text and attribute"):
-        button_attrs = auth_modal.get_auth_submit_btn_text_and_value()
-        check.is_true(button_attrs, "Authorization submit button not found or not clickable")
-        if button_attrs:
-            button_text, button_value = button_attrs
-            check.equal(button_text,
-                        EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE.upper(),
-                        f"Unexpected authorization submit button text: {button_text}. "
-                        f"Expected: {EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE.upper()}")
-            check.equal(button_value,
-                        EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE,
-                        f"Unexpected authorization submit button text: {button_value}. "
-                        f"Expected: {EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE}")
+    @allure.title("Submit button")
+    @allure.description("Checks if the submit button is clickable")
+    def test_submit_button_exists(self):
+        assert self.auth_modal.auth_submit_btn_is_clickable(), "Authorization submit button not found or not clickable"
+
+    @allure.title("Submit button attributes")
+    @allure.description("Checks if the submit button is clickable and its text and value matches the expected values")
+    def test_submit_button_attrs(self):
+        assert self.auth_modal.auth_submit_btn_is_clickable(), "Authorization submit button not found or not clickable"
+        button_text, button_value = self.auth_modal.get_auth_submit_btn_text_and_value()
         allure.attach(
             f"Button text: {button_text}. Button value: {button_value}",
-            name="modal_authorization_tab",
+            name="submit_button_attrs",
             attachment_type=allure.attachment_type.TEXT
         )
+        assert button_text == button_value.upper() == self.EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE.upper(), (
+            f"Unexpected submit button text/value:\n"
+            f"Actual button text: {button_text}. "
+            f"Expected: {self.EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE.upper()}.\n"
+            f"Actual button value: {button_value}. "
+            f"Expected: {self.EXPECTED_AUTH_SUBMIT_BUTTON_TEXT_AND_VALUE}"
+        )
 
-    with allure.step("Link for registration tab is correct"):
-        registration_tab_link = auth_modal.get_modal_tab_link()
-        check.is_true(registration_tab_link, "Link for registration tab not found")
-        check.is_true(registration_tab_link.endswith(
-            "/local/ajax/auth.php?register=yes&backurl=%2Flocal%2Fajax%2Fauth.php"
-        ))
+    @allure.title("Registration tab link")
+    @allure.description("Checks if the link for registration tab matches the expected value")
+    def test_registration_tab_link_exists(self):
+        link = self.auth_modal.get_modal_tab_link()
         allure.attach(
-            registration_tab_link,
+            link,
             name="registration_tab_link",
             attachment_type=allure.attachment_type.TEXT
         )
-
-    with allure.step("Modal window is closing up after authorization tab close button click"):
-        auth_modal.close_modal_btn()
-        check.is_true(auth_modal.modal_window_not_visible(), "Modal window not closed")
-        allure.attach(
-            main_page.driver.get_screenshot_as_png(),
-            name="screenshot_after_close_button_click",
-            attachment_type=allure.attachment_type.PNG
+        assert link, "Link for registration tab not found"
+        assert link.endswith(self.EXPECTED_REG_TAB_LINK), (
+            f"Unexpected registration tab link in modal window: {link}. "
+            f"Expected ending is: {self.EXPECTED_REG_TAB_LINK}"
         )
 
 
-@allure.feature("Login modal")
-@allure.story("Registration tab layout")
-def test_modal_reg_tab_elements_present(main_page):
+@allure.suite("Modal Window Tests")
+@allure.feature("Login Modal")
+@allure.story("Registration Tab Layout")
+@pytest.mark.usefixtures("open_auth_modal")
+@pytest.mark.parametrize("open_auth_modal", ["register"], indirect=True)
+class TestRegistrationTab:
+    main_page: MainPage
+    auth_modal: AuthModalComponent
+
     EXPECTED_REG_TAB_TITLE = "Регистрация"
     EXPECTED_REG_FIRST_NAME_PLACEHOLDER = "Имя:"
     EXPECTED_REG_LAST_NAME_PLACEHOLDER = "Фамилия:"
     EXPECTED_REG_EMAIL_PLACEHOLDER = "Адрес e-mail:"
     EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE = "Регистрация"
+    EXPECTED_AUTH_TAB_LINK = "/local/ajax/auth.php?login=yes"
 
-    main_page.header_top.click_login_button()
-    auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
-    auth_modal.switch_modal_tab_to_registration()
-
-
-    with allure.step("Registration tab is open"):
-        modal_registration_tab = auth_modal.get_modal_window()
-        check.is_true(modal_registration_tab, "Registration tab doesn't showing up")
+    @allure.title("Modal window")
+    @allure.description("Verifies that the login modal is opened and visible to the user")
+    def test_modal_is_displayed(self):
+        modal_registration_tab = self.auth_modal.get_modal_window()
         allure.attach(
             modal_registration_tab.screenshot_as_png,
             name="modal_registration_tab",
             attachment_type=allure.attachment_type.PNG
         )
+        assert modal_registration_tab, "Modal doesn't showing up after switching to registration tab"
 
-    with allure.step("Title is correct"):
-        modal_tab_title = auth_modal.get_modal_name()
-        check.equal(modal_tab_title,
-                    EXPECTED_REG_TAB_TITLE.upper(),
-                    f"Unexpected modal title: {modal_tab_title}. "
-                    f"Expected: {EXPECTED_REG_TAB_TITLE.upper()}")
+    @allure.title("Title")
+    @allure.description("Checks if the title matches the expected value")
+    def test_title(self):
+        modal_tab_title = self.auth_modal.get_modal_name()
         allure.attach(modal_tab_title,
-            name="Registration tab title",
-            attachment_type=allure.attachment_type.TEXT
+                      name="Registration tab title",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert modal_tab_title == self.EXPECTED_REG_TAB_TITLE.upper(), (
+            f"Unexpected modal title: {modal_tab_title}. "
+            f"Expected: {self.EXPECTED_REG_TAB_TITLE.upper()}"
         )
 
-    with allure.step("First name field is clickable and has correct placeholder"):
-        check.is_true(auth_modal.get_reg_first_name_field(), "First name field not found")
-        first_name_placeholder = auth_modal.get_reg_first_name_placeholder_text()
-        check.equal(first_name_placeholder,
-                    EXPECTED_REG_FIRST_NAME_PLACEHOLDER,
-                    f"Unexpected first name placeholder: {first_name_placeholder}. "
-                    f"Expected: {EXPECTED_REG_FIRST_NAME_PLACEHOLDER}")
-        allure.attach(first_name_placeholder,
-            name="First name placeholder",
-            attachment_type=allure.attachment_type.TEXT
+    @allure.title("First name field")
+    @allure.description("Verifies that the first name field is present")
+    def test_first_name_field_exists(self):
+        assert self.auth_modal.get_reg_first_name_field(), "First name field not found"
+
+    @allure.title("First name field placeholder")
+    @allure.description("Checks if the placeholder in the first name field matches the expected value")
+    def test_first_name_field_placeholder(self):
+        placeholder = self.auth_modal.get_reg_first_name_placeholder_text()
+        allure.attach(placeholder,
+                      name="First name placeholder",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert placeholder == self.EXPECTED_REG_FIRST_NAME_PLACEHOLDER, (
+            f"Unexpected first name placeholder: {placeholder}. "
+            f"Expected: {self.EXPECTED_REG_FIRST_NAME_PLACEHOLDER}"
         )
 
-    with allure.step("Last name field is clickable and has correct placeholder"):
-        check.is_true(auth_modal.get_reg_last_name_field(), "Last name field not found")
-        last_name_placeholder = auth_modal.get_reg_last_name_placeholder_text()
-        check.equal(last_name_placeholder,
-                    EXPECTED_REG_LAST_NAME_PLACEHOLDER,
-                    f"Unexpected last name placeholder: {last_name_placeholder}. "
-                    f"Expected: {EXPECTED_REG_LAST_NAME_PLACEHOLDER}")
-        allure.attach(last_name_placeholder,
-            name="Last name placeholder",
-            attachment_type=allure.attachment_type.TEXT
+    @allure.title("Last name field")
+    @allure.description("Verifies that the last name field is present")
+    def test_last_name_field_exists(self):
+        assert self.auth_modal.get_reg_first_name_field(), "Last name field not found"
+
+    @allure.title("Last name field placeholder")
+    @allure.description("Checks if the placeholder in the last name field matches the expected value")
+    def test_last_name_field_placeholder(self):
+        placeholder = self.auth_modal.get_reg_last_name_placeholder_text()
+        allure.attach(placeholder,
+                      name="Last name placeholder",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert placeholder == self.EXPECTED_REG_LAST_NAME_PLACEHOLDER, (
+            f"Unexpected first name placeholder: {placeholder}. "
+            f"Expected: {self.EXPECTED_REG_LAST_NAME_PLACEHOLDER}"
         )
 
-    with allure.step("Email field is clickable and has correct placeholder"):
-        check.is_true(auth_modal.get_reg_email_field(), "Email field not found")
-        email_placeholder = auth_modal.get_reg_email_placeholder_text()
-        check.equal(email_placeholder,
-                    EXPECTED_REG_EMAIL_PLACEHOLDER,
-                    f"Unexpected email placeholder: {email_placeholder}. "
-                    f"Expected: {EXPECTED_REG_EMAIL_PLACEHOLDER}")
-        allure.attach(email_placeholder,
-            name="Email placeholder",
-            attachment_type=allure.attachment_type.TEXT
+    @allure.title("Email field")
+    @allure.description("Verifies that the email field is present")
+    def test_email_field_exists(self):
+        assert self.auth_modal.get_reg_first_name_field(), "Email field not found"
+
+    @allure.title("Email field placeholder")
+    @allure.description("Checks if the placeholder in the email field matches the expected value")
+    def test_email_field_placeholder(self):
+        placeholder = self.auth_modal.get_reg_email_placeholder_text()
+        allure.attach(placeholder,
+                      name="Email placeholder",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
+        assert placeholder == self.EXPECTED_REG_EMAIL_PLACEHOLDER, (
+            f"Unexpected email placeholder: {placeholder}. "
+            f"Expected: {self.EXPECTED_REG_EMAIL_PLACEHOLDER}"
         )
 
-    with allure.step("Registration policy checkbox is clickable and policy link is correct"):
-        check.is_true(auth_modal.get_reg_policy_checkbox(), "Registration policy checkbox not clickable")
-        policy_link = auth_modal.get_reg_policy_link()
-        check.is_true(policy_link, "Policy link not found")
-        check.is_false(policy_link.endswith("#"), "Found a stub (#) instead of a policy link")
-        allure.attach(policy_link,
+    @allure.title("Policy checkbox is clickable")
+    @allure.description("Checks if the registration policy checkbox is clickable")
+    def test_registration_policy_checkbox_exists(self):
+        assert self.auth_modal.get_reg_policy_checkbox(), "Registration policy checkbox not clickable"
+
+    @allure.title("Policy link")
+    @allure.description("Checks if the policy link matches the expected value")
+    def test_registration_policy_link(self):
+        link = self.auth_modal.get_reg_policy_link()
+        allure.attach(link,
             name="Policy link",
             attachment_type=allure.attachment_type.TEXT
         )
+        assert link, "Policy link not found"
+        assert link.endswith("#"), "Found a stub (#) instead of a policy link"
 
-    with allure.step("Submit button is clickable and have proper text and attribute"):
-        button_attrs = auth_modal.get_reg_submit_btn_text_and_value()
-        check.is_true(button_attrs, "Authorization submit button not found or not clickable")
-        if button_attrs:
-            button_text, button_value = button_attrs
-            check.equal(button_text,
-                        EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE.upper(),
-                        f"Unexpected authorization submit button text: {button_text}. "
-                        f"Expected: {EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE.upper()}")
-            check.equal(button_value,
-                        EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE,
-                        f"Unexpected authorization submit button text: {button_value}. "
-                        f"Expected: {EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE}")
+    @allure.title("Submit button")
+    @allure.description("Checks if the submit button is clickable and its text and value matches the expected values")
+    def test_submit_button_exists(self):
+        assert self.auth_modal.reg_submit_btn_is_clickable(), "Registration submit button not found or not clickable"
+
+    @allure.title("Submit button attributes")
+    @allure.description("Checks if the submit button is clickable and its text and value matches the expected values")
+    def test_submit_button_attrs(self):
+        assert self.auth_modal.reg_submit_btn_is_clickable(), "Registration submit button not found or not clickable"
+        button_text, button_value = self.auth_modal.get_reg_submit_btn_text_and_value()
         allure.attach(
             f"Button text: {button_text}. Button value: {button_value}",
-            name="modal_authorization_tab",
+            name="submit_button_attrs",
             attachment_type=allure.attachment_type.TEXT
         )
+        assert button_text == button_value.upper() == self.EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE.upper(), (
+            f"Unexpected submit button text/value:\n"
+            f"Actual button text: {button_text}. "
+            f"Expected: {self.EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE.upper()}.\n"
+            f"Actual button value: {button_value}. "
+            f"Expected: {self.EXPECTED_REG_SUBMIT_BUTTON_TEXT_AND_VALUE}"
+        )
 
-    with allure.step("Link for authorization tab is correct"):
-        authorization_tab_link = auth_modal.get_modal_tab_link()
-        check.is_true(authorization_tab_link, "Link for authorization tab not found")
-        check.is_true(authorization_tab_link.endswith(
-            "/local/ajax/auth.php?login=yes"
-        ))
+    @allure.title("Authorization tab link")
+    @allure.description("Checks if the link for authorization tab matches the expected value")
+    def test_authorization_tab_link_exists(self):
+        link = self.auth_modal.get_modal_tab_link()
         allure.attach(
-            authorization_tab_link,
+            link,
             name="authorization_tab_link",
             attachment_type=allure.attachment_type.TEXT
         )
+        assert link, "Link for authorization tab not found"
+        assert link.endswith(self.EXPECTED_AUTH_TAB_LINK), (
+            f"Unexpected authorization tab link in modal window: {link}. "
+            f"Expected ending is: {self.EXPECTED_AUTH_TAB_LINK}"
+        )
 
-    with allure.step("Modal window is closing up after registration tab close button click"):
-        auth_modal.close_modal_btn()
-        check.is_true(auth_modal.modal_window_not_visible(), "Modal window not closed")
+@allure.suite("Modal Window Tests")
+@allure.feature("Login Modal")
+@allure.story("Modal Close Button Behavior")
+@pytest.mark.parametrize("open_auth_modal", ["auth", "register"], indirect=True)
+@pytest.mark.usefixtures("open_auth_modal")
+class TestModalClose:
+    main_page: MainPage
+    auth_modal: AuthModalComponent
+    tab: str
+
+    def test_close_button_closes_modal(self):
+        allure.dynamic.title(f"Close button closes modal (tab: {self.tab})")
+        self.auth_modal.close_modal_btn()
         allure.attach(
-            main_page.driver.get_screenshot_as_png(),
+            self.main_page.driver.get_screenshot_as_png(),
             name="screenshot_after_close_button_click",
             attachment_type=allure.attachment_type.PNG
         )
+        assert self.auth_modal.modal_window_not_visible(), "Modal did not close after clicking close button"
