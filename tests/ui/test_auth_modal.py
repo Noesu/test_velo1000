@@ -1,12 +1,14 @@
 import allure
+import itertools
 import pytest
+from selenium.webdriver.remote.webelement import WebElement
 
 from pages.components.auth_modal import AuthModalComponent
 from pages.main_page import MainPage
 
 
-@pytest.fixture(scope="class", autouse=True)
-def open_auth_modal(request, main_page):
+@pytest.fixture(scope="class")
+def open_auth_modal_class(request, main_page):
     tab = request.param
     request.cls.tab = tab
     main_page.header_top.click_login_button()
@@ -16,11 +18,25 @@ def open_auth_modal(request, main_page):
     request.cls.main_page = main_page
     request.cls.auth_modal = auth_modal
 
+@pytest.fixture(scope="function")
+def open_auth_modal_function(request, main_page):
+    try:
+        existing_modal = AuthModalComponent(main_page.driver, main_page.wait)
+        existing_modal.close_modal()
+    except Exception:
+        pass
+    main_page.header_top.click_login_button()
+    auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
+    auth_modal.switch_modal_tab_to_registration()
+    request.cls.main_page = main_page
+    request.cls.auth_modal = auth_modal
+
+
 @allure.suite("Modal Window Tests")
-@allure.feature("Login Modal")
+@allure.feature("Authorization")
 @allure.story("Authorization Tab Layout")
-@pytest.mark.usefixtures("open_auth_modal")
-@pytest.mark.parametrize("open_auth_modal", ["auth"], indirect=True)
+@pytest.mark.usefixtures("open_auth_modal_class")
+@pytest.mark.parametrize("open_auth_modal_class", ["auth"], indirect=True)
 class TestAuthorizationTab:
     main_page: MainPage
     auth_modal: AuthModalComponent
@@ -154,10 +170,10 @@ class TestAuthorizationTab:
 
 
 @allure.suite("Modal Window Tests")
-@allure.feature("Login Modal")
+@allure.feature("Registration")
 @allure.story("Registration Tab Layout")
-@pytest.mark.usefixtures("open_auth_modal")
-@pytest.mark.parametrize("open_auth_modal", ["register"], indirect=True)
+@pytest.mark.usefixtures("open_auth_modal_class")
+@pytest.mark.parametrize("open_auth_modal_class", ["register"], indirect=True)
 class TestRegistrationTab:
     main_page: MainPage
     auth_modal: AuthModalComponent
@@ -257,9 +273,9 @@ class TestRegistrationTab:
     def test_registration_policy_link(self):
         link = self.auth_modal.get_reg_policy_link()
         allure.attach(link,
-            name="Policy link",
-            attachment_type=allure.attachment_type.TEXT
-        )
+                      name="Policy link",
+                      attachment_type=allure.attachment_type.TEXT
+                      )
         assert link, "Policy link not found"
         assert link.endswith("#"), "Found a stub (#) instead of a policy link"
 
@@ -301,11 +317,12 @@ class TestRegistrationTab:
             f"Expected ending is: {self.EXPECTED_AUTH_TAB_LINK}"
         )
 
+
 @allure.suite("Modal Window Tests")
-@allure.feature("Login Modal")
+@allure.feature("Close Button")
 @allure.story("Modal Close Button Behavior")
-@pytest.mark.parametrize("open_auth_modal", ["auth", "register"], indirect=True)
-@pytest.mark.usefixtures("open_auth_modal")
+@pytest.mark.parametrize("open_auth_modal_class", ["auth", "register"], indirect=True)
+@pytest.mark.usefixtures("open_auth_modal_class")
 class TestModalClose:
     main_page: MainPage
     auth_modal: AuthModalComponent
@@ -313,10 +330,127 @@ class TestModalClose:
 
     def test_close_button_closes_modal(self):
         allure.dynamic.title(f"Close button closes modal (tab: {self.tab})")
-        self.auth_modal.close_modal_btn()
+        self.auth_modal.close_modal()
         allure.attach(
             self.main_page.driver.get_screenshot_as_png(),
             name="screenshot_after_close_button_click",
             attachment_type=allure.attachment_type.PNG
         )
-        assert self.auth_modal.modal_window_not_visible(), "Modal did not close after clicking close button"
+        assert self.auth_modal.modal_window_not_visible(timeout=.5), "Modal did not close after clicking close button"
+
+
+@allure.suite("Modal Window Tests")
+@allure.feature("Registration")
+@allure.story("Form Behavior Without Filling Mandatory Fields")
+@pytest.mark.usefixtures("open_auth_modal_function")
+class TestRegistrationFormNegativeCases:
+    main_page: MainPage
+    auth_modal: AuthModalComponent
+
+    EXPECTED_AUTH_TAB_TITLE = "Регистрация"
+
+    all_combinations = list(itertools.product([False, True], repeat=4))
+    invalid_combinations = [combo for combo in all_combinations if not all(combo)]
+
+    @allure.title("Negative registration test")
+    @pytest.mark.parametrize("first_name, last_name, email, agree_checked", invalid_combinations)
+    def test_submit_with_invalid_data(self, first_name, last_name, email, agree_checked, fake_user):
+        modal: WebElement = self.auth_modal.get_modal_window()
+        allure.attach(modal.screenshot_as_png,
+                      name="Modal screenshot before interaction",
+                      attachment_type=allure.attachment_type.PNG
+                      )
+        if first_name:
+            assert self.auth_modal.set_reg_first_name(fake_user.first_name), "Unable to locate field or paste text"
+        if last_name:
+            assert self.auth_modal.set_reg_last_name(fake_user.last_name), "Unable to locate field or paste text"
+        if email:
+            assert self.auth_modal.set_reg_email(fake_user.email), "Unable to locate field or paste text"
+        if agree_checked:
+            assert self.auth_modal.set_reg_policy_checkbox(
+                True) == agree_checked, f"Unable to set the checkbox {agree_checked}"
+
+        modal: WebElement = self.auth_modal.get_modal_window()
+        allure.attach(modal.screenshot_as_png,
+                      name="Modal screenshot before submit",
+                      attachment_type=allure.attachment_type.PNG
+                      )
+        self.auth_modal.click_reg_submit()
+
+        if not agree_checked:
+            assert self.auth_modal.get_modal_name().strip().lower() == self.EXPECTED_AUTH_TAB_TITLE.lower(), (
+                "User registered without policy agreed"
+            )
+        else:
+            error_text = self.auth_modal.get_reg_error_messages()
+            allure.attach(
+                "\n".join(error_text),
+                name="Validation errors",
+                attachment_type=allure.attachment_type.TEXT
+            )
+
+            if not first_name:
+                assert 'Поле "Имя" обязательно для заполнения' in error_text
+            if not last_name:
+                assert 'Поле "Фамилия" обязательно для заполнения' in error_text
+            if not email:
+                assert 'Поле "Адрес e-mail" обязательно для заполнения' in error_text
+
+
+
+@allure.suite("Modal Window Tests")
+@allure.feature("Registration")
+@allure.story("Form Behavior With Filling Mandatory Fields")
+@pytest.mark.usefixtures("open_auth_modal_function")
+class TestRegistrationFormPositiveCase:
+    main_page: MainPage
+    auth_modal: AuthModalComponent
+
+    EXPECTED_LOGGED_IN_BTN_TEXT = "ВЫЙТИ"
+
+    @allure.title("Positive registration test")
+    def test_submit_with_correct_data(self, fake_user):
+        assert self.auth_modal.set_reg_first_name(fake_user.first_name), "Unable to locate field or paste text"
+        assert self.auth_modal.set_reg_last_name(fake_user.last_name), "Unable to locate field or paste text"
+        assert self.auth_modal.set_reg_email(fake_user.email), "Unable to locate field or paste text"
+        assert self.auth_modal.set_reg_policy_checkbox(True) == True, f"Unable to set the checkbox True"
+
+        modal: WebElement = self.auth_modal.get_modal_window()
+        allure.attach(modal.screenshot_as_png,
+                      name="Modal screenshot before submit",
+                      attachment_type=allure.attachment_type.PNG
+                      )
+
+        self.auth_modal.click_reg_submit()
+        expected_text = [
+            f"Здравствуйте, {fake_user.first_name} {fake_user.last_name}!",
+            "Вы зарегистрированы и успешно вошли на сайт!",
+            "Сейчас страница автоматически перезагрузится и вы сможете продолжить работу под своим именем."
+        ]
+        actual_text: list[str] = self.auth_modal.get_reg_successful_text()
+
+        modal: WebElement = self.auth_modal.get_modal_window()
+        allure.attach(modal.screenshot_as_png,
+                      name="Modal screenshot after submit",
+                      attachment_type=allure.attachment_type.PNG
+                      )
+
+        assert actual_text == expected_text, (f"Unexpected message text: {actual_text}. "
+                                              f"Expected: {expected_text}")
+
+        # self.auth_modal.close_modal()
+        self.auth_modal.modal_window_not_visible(timeout=3)
+
+        button_text = self.main_page.header_top.get_logged_in_text()
+
+        allure.attach(
+            self.main_page.driver.get_screenshot_as_png(),
+            name="screenshot_after_successful registration",
+            attachment_type=allure.attachment_type.PNG
+        )
+
+        assert button_text == self.EXPECTED_LOGGED_IN_BTN_TEXT, (
+            f"Error logging in! Actual login button text: {button_text}. "
+            f"Expected login button text: {self.EXPECTED_LOGGED_IN_BTN_TEXT}"
+        )
+

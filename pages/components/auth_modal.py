@@ -9,7 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 
 class AuthModalComponent:
-    MODAL_WEB_ELEMENT =  (By.CSS_SELECTOR, "div.popup-auth__inner")
+    MODAL_WEB_ELEMENT = (By.CSS_SELECTOR, "div.popup-auth__inner")
     MODAL_NAME = (By.CSS_SELECTOR, "h3.auth__title")
     MODAL_CLOSE_BTN = (By.CSS_SELECTOR, '.close-auth')
     MODAL_TAB_LINK = (By.CSS_SELECTOR, '.auth__tab .ajax-link')
@@ -30,9 +30,13 @@ class AuthModalComponent:
     REG_LAST_NAME_PLACEHOLDER = (By.XPATH, '//div[@class="input-style"][.//input[@name="REGISTER[LAST_NAME]"]]/label')
     REG_EMAIL_FIELD = (By.CSS_SELECTOR, 'input[name="REGISTER[EMAIL]"]')
     REG_EMAIL_PLACEHOLDER = (By.XPATH, '//div[@class="input-style"][.//input[@name="REGISTER[EMAIL]"]]/label')
-    REG_POLICY_CHECKBOX = (By.CSS_SELECTOR, '.input-checkbox-circle')
+    REG_POLICY_CHECKBOX_LABEL = (By.CSS_SELECTOR, '.input-checkbox-circle')
+    REG_POLICY_CHECKBOX_INPUT = (By.CSS_SELECTOR, '.input-checkbox-circle input')
     REG_POLICY_LINK = (By.CSS_SELECTOR, ".policy-info a")
     REG_SUBMIT_BTN = (By.CSS_SELECTOR, 'button[type="submit"][name="register_submit_button"]')
+
+    REG_SUCCESSFUL = (By.CSS_SELECTOR, ".uk-modal-content p")
+    REG_ERROR_TEXT = (By.CSS_SELECTOR, ".errortext")
 
     def __init__(self, driver, wait) -> None:
         self.driver = driver
@@ -42,9 +46,10 @@ class AuthModalComponent:
         time.sleep(1)
         return self.wait.until(EC.visibility_of_element_located(self.MODAL_WEB_ELEMENT))
 
-    def modal_window_not_visible(self):
+    def modal_window_not_visible(self, timeout: Union[int, float]):
         try:
-            WebDriverWait(self.driver, timeout=.5).until_not(EC.visibility_of_element_located(self.MODAL_WEB_ELEMENT))
+            WebDriverWait(self.driver, timeout=timeout).until_not(
+                EC.visibility_of_element_located(self.MODAL_WEB_ELEMENT))
             return True
         except TimeoutException:
             return False
@@ -56,10 +61,6 @@ class AuthModalComponent:
         except TimeoutException:
             return False
 
-    def close_modal_btn(self) -> None:
-        button: WebElement = self.wait.until(EC.visibility_of_element_located(self.MODAL_CLOSE_BTN))
-        button.click()
-
     def get_modal_name(self) -> str:
         title_element: WebElement = self.wait.until(EC.visibility_of_element_located(self.MODAL_NAME))
         return title_element.text
@@ -67,7 +68,6 @@ class AuthModalComponent:
     def get_modal_tab_link(self):
         inactive_tab_link: WebElement = self.wait.until(EC.element_to_be_clickable(self.MODAL_TAB_LINK))
         return inactive_tab_link.get_attribute('href')
-
 
     #  Modal window authorization tab items:
     def get_auth_email_field(self) -> bool:
@@ -129,13 +129,6 @@ class AuthModalComponent:
         except Exception:
             return None
 
-    def switch_modal_tab_to_registration(self) -> None:
-        link: WebElement = self.wait.until(EC.element_to_be_clickable(self.MODAL_REGISTRATION_TAB))
-        link.click()
-        time.sleep(.5)
-
-
-
     #  Modal window registration tab items:
     def get_reg_first_name_field(self) -> bool:
         try:
@@ -172,7 +165,7 @@ class AuthModalComponent:
 
     def get_reg_policy_checkbox(self) -> bool:
         try:
-            self.wait.until(EC.element_to_be_clickable(self.REG_POLICY_CHECKBOX))
+            self.wait.until(EC.element_to_be_clickable(self.REG_POLICY_CHECKBOX_LABEL))
             return True
         except TimeoutException:
             return False
@@ -199,3 +192,72 @@ class AuthModalComponent:
             return button_text, button_value
         except Exception:
             return None
+
+    # Modal window successful registration
+
+    def get_reg_successful_text(self) -> list[str]:
+        try:
+            elements: list[WebElement] = self.wait.until(EC.visibility_of_all_elements_located(self.REG_SUCCESSFUL))
+            return [line.strip() for el in elements for line in el.text.splitlines() if line.strip()]
+        except TimeoutException:
+            return []
+
+    # Modal window interactions
+
+    def close_modal(self) -> None:
+        button: WebElement = self.wait.until(EC.visibility_of_element_located(self.MODAL_CLOSE_BTN))
+        button.click()
+
+    def switch_modal_tab_to_registration(self) -> None:
+        link: WebElement = self.wait.until(EC.element_to_be_clickable(self.MODAL_REGISTRATION_TAB))
+        link.click()
+        time.sleep(.5)
+
+    def set_reg_first_name(self, first_name: str) -> bool:
+        try:
+            first_name_field: WebElement = self.wait.until(EC.element_to_be_clickable(self.REG_FIRST_NAME_FIELD))
+            first_name_field.clear()
+            first_name_field.send_keys(first_name)
+            return first_name_field.get_attribute("value") == first_name
+        except Exception:
+            return False
+
+    def set_reg_last_name(self, last_name: str) -> bool:
+        try:
+            last_name_field: WebElement = self.wait.until(EC.element_to_be_clickable(self.REG_LAST_NAME_FIELD))
+            last_name_field.clear()
+            last_name_field.send_keys(last_name)
+            return last_name_field.get_attribute("value") == last_name
+        except TimeoutException:
+            return False
+
+    def set_reg_email(self, email: str) -> bool:
+        try:
+            email_field: WebElement = self.wait.until(EC.element_to_be_clickable(self.REG_EMAIL_FIELD))
+            email_field.clear()
+            email_field.send_keys(email)
+            return email_field.get_attribute("value") == email
+        except TimeoutException:
+            return False
+
+    def set_reg_policy_checkbox(self, switch_on: bool) -> bool:
+        try:
+            checkbox: WebElement = self.wait.until(EC.presence_of_element_located(self.REG_POLICY_CHECKBOX_INPUT))
+            if checkbox.is_selected() != switch_on:
+                checkbox_label: WebElement = self.wait.until(EC.element_to_be_clickable(self.REG_POLICY_CHECKBOX_LABEL))
+                checkbox_label.click()
+                self.wait.until(EC.element_located_selection_state_to_be(self.REG_POLICY_CHECKBOX_INPUT, switch_on))
+            return checkbox.is_selected()
+        except Exception:
+            return False
+
+    def click_reg_submit(self) -> None:
+        button: WebElement = self.wait.until(EC.element_to_be_clickable(self.REG_SUBMIT_BTN))
+        button.click()
+
+    def get_reg_error_messages(self) -> list[str]:
+        try:
+            element: WebElement = self.wait.until(EC.visibility_of_element_located(self.REG_ERROR_TEXT))
+            return element.text.strip().splitlines()
+        except TimeoutException:
+            return []

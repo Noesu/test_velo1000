@@ -15,6 +15,7 @@ class HeaderTop:
     SEARCH_FIELD = (By.ID, "input__search")
     PROFILE_MENU_ITEMS = (By.CSS_SELECTOR, "div.button-header.button-profile .profile-popup__link")
     LOGIN_BUTTON = (By.CSS_SELECTOR, "div.button-header.button-acc")
+    LOGGED_IN = (By.CSS_SELECTOR, ".button-header.button-acc span")
 
     def __init__(self, driver, wait) -> None:
         self.driver = driver
@@ -90,6 +91,13 @@ class HeaderTop:
             return [(item.get_attribute("textContent"), item.get_attribute("href")) for item in items]
         except TimeoutException:
             return []
+
+    def get_logged_in_text(self) -> Optional[str]:
+        try:
+            element: WebElement = self.wait.until(EC.presence_of_element_located(self.LOGGED_IN))
+            return element.text
+        except TimeoutException:
+            return None
 
     def click_login_button(self):
         login_button: WebElement = self.wait.until(EC.element_to_be_clickable(self.LOGIN_BUTTON))
