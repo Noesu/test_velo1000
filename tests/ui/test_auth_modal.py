@@ -114,35 +114,51 @@ class TestAuthorizationTab:
     @allure.title("Password field visibility button")
     @allure.description("Checks if the password field has visibility_btn")
     def test_password_field_visibility_btn(self):
-        assert self.auth_modal.is_auth_password_visibility_btn_clickable(), "Password visibility button not found"
+        assert self.auth_modal.is_auth_password_visibility_btn_present(), "Password visibility button not found"
 
     @allure.title("Password visibility toggle button")
     @allure.description("Checks whether the password visibility toggle correctly shows and hides the password")
     def test_password_field_visibility_btn_working(self, fake_user):
         self.auth_modal.set_auth_password(fake_user.password)
         attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot with inserted password")
-        assert not self.auth_modal.is_password_visible(), (
+        assert not self.auth_modal.is_auth_password_visible(), (
             "Password should be hidden by default, but it's visible"
         )
 
         self.auth_modal.click_auth_password_visibility_btn()
         attach_screenshot(self.auth_modal.get_modal_window(),
                           "Modal screenshot after visibility toggle clicked")
-        assert self.auth_modal.is_password_visible(), (
+        assert self.auth_modal.is_auth_password_visible(), (
             "Password should be visible after clicking the visibility toggle, but it's still hidden"
         )
 
         self.auth_modal.click_auth_password_visibility_btn()
         attach_screenshot(self.auth_modal.get_modal_window(),
                           "Modal screenshot after visibility toggle clicked again")
-        assert not self.auth_modal.is_password_visible(), (
+        assert not self.auth_modal.is_auth_password_visible(), (
             "Password should be hidden again after toggling, but it's still visible"
         )
 
-    @allure.title("Remember me switch")
-    @allure.description("Checks if the remember me switch is clickable")
-    def test_remember_me_switch(self):
+    @allure.title("Remember me checkbox")
+    @allure.description("Checks if the remember me checkbox is clickable")
+    def test_remember_me_checkbox(self):
         assert self.auth_modal.is_auth_remember_me_checkbox_clickable(), "Remember me switch not clickable"
+
+    @allure.title("Remember me checkbox functionality")
+    @allure.description("Click remember me checkbox and check its status after reopening modal")
+    def test_remember_me_checkbox_working(self):
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+        assert self.auth_modal.is_remember_me_checkbox_checked() == False, "Unexpected checkbox status. Expected False"
+
+        attach_screenshot(self.auth_modal.get_modal_window(), (
+            "Modal screenshot after remember me checkbox switch on"))
+        assert self.auth_modal.set_auth_remember_me_checkbox(True) == True, "Unexpected checkbox status. Expected True"
+
+        self.auth_modal.close_modal()
+        self.main_page.header_top.click_login_button()
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after reopening")
+        assert self.auth_modal.is_remember_me_checkbox_checked() == True, (
+                f"Unexpected checkbox status after modal reopened. Expected True")
 
     @allure.title("Forgot password link")
     @allure.description("Checks if the forgot password link is correct")
@@ -359,7 +375,7 @@ class TestModalClose:
             name="screenshot_after_close_button_click",
             attachment_type=allure.attachment_type.PNG
         )
-        assert self.auth_modal.modal_window_not_visible(timeout=.5), "Modal did not close after clicking close button"
+        assert self.auth_modal.is_modal_window_not_visible(timeout=.5), "Modal did not close after clicking close button"
 
 
 @allure.suite("Modal Window Tests")
@@ -444,7 +460,7 @@ class TestRegistrationFormPositiveCase:
         assert actual_text == expected_text, (f"Unexpected message text: {actual_text}. "
                                               f"Expected: {expected_text}")
 
-        self.auth_modal.modal_window_not_visible(timeout=3)
+        self.auth_modal.is_modal_window_not_visible(timeout=3)
 
         button_text = self.main_page.header_top.get_logged_in_text()
 
@@ -558,7 +574,7 @@ class TestAuthorizationFormPositiveCases:
 
     @allure.title("Modal window")
     @allure.description("Checks that authorization successful with correct data")
-    def test_authorization_with_invalid_data(self):
+    def test_authorization_with_correct_data(self):
         attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
 
         assert self.auth_modal.set_auth_email(USER_LOGIN), "Unable to locate email field or paste data"
@@ -575,7 +591,7 @@ class TestAuthorizationFormPositiveCases:
         assert actual_text == expected_text, (f"Unexpected message text: {actual_text}. "
                                               f"Expected: {expected_text}")
 
-        self.auth_modal.modal_window_not_visible(timeout=3)
+        self.auth_modal.is_modal_window_not_visible(timeout=3)
 
         button_text = self.main_page.header_top.get_logged_in_text()
 
