@@ -108,6 +108,11 @@ def test_profile_menu(main_page) -> None:
             attachment_type=allure.attachment_type.JSON
         )
 
+    # @allure.feature("Smoke-tests")
+    # @allure.story("Profile menu")
+    # @allure.title("Test profile menu links opens in guest mode")
+    # def test_profile_menu_links_for_guest_user(main_page)
+
 
 @allure.feature("Smoke-tests")
 @allure.story("Authorization/registration modal")

@@ -14,6 +14,7 @@ class FakeUser:
     first_name: str
     last_name: str
     email: str
+    password: str
 
 @pytest.fixture(scope="class")
 def browser():
@@ -36,10 +37,12 @@ def fake_user():
         first_name=faker.first_name(),
         last_name=faker.last_name(),
         email=faker.email(),
+        password=faker.password()
     )
 
 # @pytest.fixture
 # def authorized_main_page(main_page):
 #     main_page.header_top.click_login_button()
+#     auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
 #     main_page.login_page.login("test_user", "secure_password")  # предполагается login_page и метод login
 #     return main_page

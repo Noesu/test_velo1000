@@ -3,6 +3,7 @@ import itertools
 import pytest
 from selenium.webdriver.remote.webelement import WebElement
 
+from config.settings import USER_LOGIN, USER_PASSWORD, USER_FIRST_NAME, USER_LAST_NAME
 from pages.components.auth_modal import AuthModalComponent
 from pages.main_page import MainPage
 
@@ -18,6 +19,7 @@ def open_auth_modal_class(request, main_page):
     request.cls.main_page = main_page
     request.cls.auth_modal = auth_modal
 
+
 @pytest.fixture(scope="function")
 def open_auth_modal_function(request, main_page):
     try:
@@ -30,6 +32,11 @@ def open_auth_modal_function(request, main_page):
     auth_modal.switch_modal_tab_to_registration()
     request.cls.main_page = main_page
     request.cls.auth_modal = auth_modal
+
+
+def attach_screenshot(modal: WebElement, name: str) -> None:
+    """Attaches a screenshot of the modal window to Allure report."""
+    allure.attach(modal.screenshot_as_png, name=name, attachment_type=allure.attachment_type.PNG)
 
 
 @allure.suite("Modal Window Tests")
@@ -52,10 +59,7 @@ class TestAuthorizationTab:
     @allure.description("Verifies that the login modal is opened and visible to the user")
     def test_modal_is_displayed(self):
         modal = self.auth_modal.get_modal_window()
-        allure.attach(modal.screenshot_as_png,
-                      name="Modal screenshot",
-                      attachment_type=allure.attachment_type.PNG
-                      )
+        attach_screenshot(modal, "Modal screenshot")
         assert modal, "Modal doesn't showing up"
 
     @allure.title("Title")
@@ -74,7 +78,7 @@ class TestAuthorizationTab:
     @allure.title("Email field")
     @allure.description("Checks that the email field is rendered in the authorization form")
     def test_email_field_exists(self):
-        assert self.auth_modal.get_auth_email_field(), "Email field not found"
+        assert self.auth_modal.is_auth_email_field_visible(), "Email field not found"
 
     @allure.title("Email field placeholder")
     @allure.description("Checks if the placeholder in the email field matches the expected value")
@@ -92,7 +96,7 @@ class TestAuthorizationTab:
     @allure.title("Password field")
     @allure.description("Checks that the password field is visible")
     def test_password_field_exists(self):
-        assert self.auth_modal.get_auth_password_field(), "Password field not found"
+        assert self.auth_modal.is_auth_password_field_visible(), "Password field not found"
 
     @allure.title("Password field placeholder text")
     @allure.description("Checks if the placeholder in the password field matches the expected value")
@@ -110,12 +114,35 @@ class TestAuthorizationTab:
     @allure.title("Password field visibility button")
     @allure.description("Checks if the password field has visibility_btn")
     def test_password_field_visibility_btn(self):
-        assert self.auth_modal.get_auth_password_visibility_btn(), "Password visibility button not found"
+        assert self.auth_modal.is_auth_password_visibility_btn_clickable(), "Password visibility button not found"
+
+    @allure.title("Password visibility toggle button")
+    @allure.description("Checks whether the password visibility toggle correctly shows and hides the password")
+    def test_password_field_visibility_btn_working(self, fake_user):
+        self.auth_modal.set_auth_password(fake_user.password)
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot with inserted password")
+        assert not self.auth_modal.is_password_visible(), (
+            "Password should be hidden by default, but it's visible"
+        )
+
+        self.auth_modal.click_auth_password_visibility_btn()
+        attach_screenshot(self.auth_modal.get_modal_window(),
+                          "Modal screenshot after visibility toggle clicked")
+        assert self.auth_modal.is_password_visible(), (
+            "Password should be visible after clicking the visibility toggle, but it's still hidden"
+        )
+
+        self.auth_modal.click_auth_password_visibility_btn()
+        attach_screenshot(self.auth_modal.get_modal_window(),
+                          "Modal screenshot after visibility toggle clicked again")
+        assert not self.auth_modal.is_password_visible(), (
+            "Password should be hidden again after toggling, but it's still visible"
+        )
 
     @allure.title("Remember me switch")
     @allure.description("Checks if the remember me switch is clickable")
     def test_remember_me_switch(self):
-        assert self.auth_modal.get_auth_remember_me_switch(), "Remember me switch not clickable"
+        assert self.auth_modal.is_auth_remember_me_checkbox_clickable(), "Remember me switch not clickable"
 
     @allure.title("Forgot password link")
     @allure.description("Checks if the forgot password link is correct")
@@ -133,12 +160,12 @@ class TestAuthorizationTab:
     @allure.title("Submit button")
     @allure.description("Checks if the submit button is clickable")
     def test_submit_button_exists(self):
-        assert self.auth_modal.auth_submit_btn_is_clickable(), "Authorization submit button not found or not clickable"
+        assert self.auth_modal.is_auth_submit_btn_clickable(), "Authorization submit button not found or not clickable"
 
     @allure.title("Submit button attributes")
     @allure.description("Checks if the submit button is clickable and its text and value matches the expected values")
     def test_submit_button_attrs(self):
-        assert self.auth_modal.auth_submit_btn_is_clickable(), "Authorization submit button not found or not clickable"
+        assert self.auth_modal.is_auth_submit_btn_clickable(), "Authorization submit button not found or not clickable"
         button_text, button_value = self.auth_modal.get_auth_submit_btn_text_and_value()
         allure.attach(
             f"Button text: {button_text}. Button value: {button_value}",
@@ -189,11 +216,7 @@ class TestRegistrationTab:
     @allure.description("Verifies that the login modal is opened and visible to the user")
     def test_modal_is_displayed(self):
         modal_registration_tab = self.auth_modal.get_modal_window()
-        allure.attach(
-            modal_registration_tab.screenshot_as_png,
-            name="modal_registration_tab",
-            attachment_type=allure.attachment_type.PNG
-        )
+        attach_screenshot(modal_registration_tab, "Modal screenshot before submit")
         assert modal_registration_tab, "Modal doesn't showing up after switching to registration tab"
 
     @allure.title("Title")
@@ -212,7 +235,7 @@ class TestRegistrationTab:
     @allure.title("First name field")
     @allure.description("Verifies that the first name field is present")
     def test_first_name_field_exists(self):
-        assert self.auth_modal.get_reg_first_name_field(), "First name field not found"
+        assert self.auth_modal.is_reg_first_name_field_clickable(), "First name field not found"
 
     @allure.title("First name field placeholder")
     @allure.description("Checks if the placeholder in the first name field matches the expected value")
@@ -230,7 +253,7 @@ class TestRegistrationTab:
     @allure.title("Last name field")
     @allure.description("Verifies that the last name field is present")
     def test_last_name_field_exists(self):
-        assert self.auth_modal.get_reg_first_name_field(), "Last name field not found"
+        assert self.auth_modal.is_reg_first_name_field_clickable(), "Last name field not found"
 
     @allure.title("Last name field placeholder")
     @allure.description("Checks if the placeholder in the last name field matches the expected value")
@@ -248,7 +271,7 @@ class TestRegistrationTab:
     @allure.title("Email field")
     @allure.description("Verifies that the email field is present")
     def test_email_field_exists(self):
-        assert self.auth_modal.get_reg_first_name_field(), "Email field not found"
+        assert self.auth_modal.is_reg_first_name_field_clickable(), "Email field not found"
 
     @allure.title("Email field placeholder")
     @allure.description("Checks if the placeholder in the email field matches the expected value")
@@ -266,7 +289,7 @@ class TestRegistrationTab:
     @allure.title("Policy checkbox is clickable")
     @allure.description("Checks if the registration policy checkbox is clickable")
     def test_registration_policy_checkbox_exists(self):
-        assert self.auth_modal.get_reg_policy_checkbox(), "Registration policy checkbox not clickable"
+        assert self.auth_modal.is_reg_policy_checkbox_clickable(), "Registration policy checkbox not clickable"
 
     @allure.title("Policy link")
     @allure.description("Checks if the policy link matches the expected value")
@@ -282,12 +305,12 @@ class TestRegistrationTab:
     @allure.title("Submit button")
     @allure.description("Checks if the submit button is clickable and its text and value matches the expected values")
     def test_submit_button_exists(self):
-        assert self.auth_modal.reg_submit_btn_is_clickable(), "Registration submit button not found or not clickable"
+        assert self.auth_modal.is_reg_submit_btn_clickable(), "Registration submit button not found or not clickable"
 
     @allure.title("Submit button attributes")
     @allure.description("Checks if the submit button is clickable and its text and value matches the expected values")
     def test_submit_button_attrs(self):
-        assert self.auth_modal.reg_submit_btn_is_clickable(), "Registration submit button not found or not clickable"
+        assert self.auth_modal.is_reg_submit_btn_clickable(), "Registration submit button not found or not clickable"
         button_text, button_value = self.auth_modal.get_reg_submit_btn_text_and_value()
         allure.attach(
             f"Button text: {button_text}. Button value: {button_value}",
@@ -355,11 +378,8 @@ class TestRegistrationFormNegativeCases:
     @allure.title("Negative registration test")
     @pytest.mark.parametrize("first_name, last_name, email, agree_checked", invalid_combinations)
     def test_submit_with_invalid_data(self, first_name, last_name, email, agree_checked, fake_user):
-        modal: WebElement = self.auth_modal.get_modal_window()
-        allure.attach(modal.screenshot_as_png,
-                      name="Modal screenshot before interaction",
-                      attachment_type=allure.attachment_type.PNG
-                      )
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+
         if first_name:
             assert self.auth_modal.set_reg_first_name(fake_user.first_name), "Unable to locate field or paste text"
         if last_name:
@@ -369,12 +389,8 @@ class TestRegistrationFormNegativeCases:
         if agree_checked:
             assert self.auth_modal.set_reg_policy_checkbox(
                 True) == agree_checked, f"Unable to set the checkbox {agree_checked}"
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
 
-        modal: WebElement = self.auth_modal.get_modal_window()
-        allure.attach(modal.screenshot_as_png,
-                      name="Modal screenshot before submit",
-                      attachment_type=allure.attachment_type.PNG
-                      )
         self.auth_modal.click_reg_submit()
 
         if not agree_checked:
@@ -397,7 +413,6 @@ class TestRegistrationFormNegativeCases:
                 assert 'Поле "Адрес e-mail" обязательно для заполнения' in error_text
 
 
-
 @allure.suite("Modal Window Tests")
 @allure.feature("Registration")
 @allure.story("Form Behavior With Filling Mandatory Fields")
@@ -414,31 +429,21 @@ class TestRegistrationFormPositiveCase:
         assert self.auth_modal.set_reg_last_name(fake_user.last_name), "Unable to locate field or paste text"
         assert self.auth_modal.set_reg_email(fake_user.email), "Unable to locate field or paste text"
         assert self.auth_modal.set_reg_policy_checkbox(True) == True, f"Unable to set the checkbox True"
-
-        modal: WebElement = self.auth_modal.get_modal_window()
-        allure.attach(modal.screenshot_as_png,
-                      name="Modal screenshot before submit",
-                      attachment_type=allure.attachment_type.PNG
-                      )
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
 
         self.auth_modal.click_reg_submit()
+
         expected_text = [
             f"Здравствуйте, {fake_user.first_name} {fake_user.last_name}!",
             "Вы зарегистрированы и успешно вошли на сайт!",
             "Сейчас страница автоматически перезагрузится и вы сможете продолжить работу под своим именем."
         ]
         actual_text: list[str] = self.auth_modal.get_reg_successful_text()
-
-        modal: WebElement = self.auth_modal.get_modal_window()
-        allure.attach(modal.screenshot_as_png,
-                      name="Modal screenshot after submit",
-                      attachment_type=allure.attachment_type.PNG
-                      )
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after submit")
 
         assert actual_text == expected_text, (f"Unexpected message text: {actual_text}. "
                                               f"Expected: {expected_text}")
 
-        # self.auth_modal.close_modal()
         self.auth_modal.modal_window_not_visible(timeout=3)
 
         button_text = self.main_page.header_top.get_logged_in_text()
@@ -454,3 +459,133 @@ class TestRegistrationFormPositiveCase:
             f"Expected login button text: {self.EXPECTED_LOGGED_IN_BTN_TEXT}"
         )
 
+
+@allure.suite("Modal Window Tests")
+@allure.feature("Authorization")
+@allure.story("Form Behavior Without Filling Mandatory Fields")
+@pytest.mark.usefixtures("open_auth_modal_class")
+@pytest.mark.parametrize("open_auth_modal_class", ["auth"], indirect=True)
+class TestAuthorizationFormNegativeCases:
+    """Negative test cases for authorization tab in modal window with various invalid credential combinations."""
+
+    main_page: MainPage
+    auth_modal: AuthModalComponent
+
+    @allure.title("Modal window")
+    @allure.description("Checks that authorization fails when both email and password are invalid")
+    def test_authorization_with_invalid_data(self, fake_user):
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+
+        assert self.auth_modal.set_auth_email(fake_user.email), "Unable to locate email field or paste data"
+        assert self.auth_modal.set_auth_password(fake_user.password), "Unable to locate password field or paste data"
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
+
+        self.auth_modal.click_auth_submit()
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after submit")
+
+        error_text = self.auth_modal.get_auth_error_messages()
+        assert "Неверный логин или пароль." in error_text, f"Unexpected error text: {error_text}"
+
+    @allure.title("Modal window")
+    @allure.description("Checks that authorization fails when password is missing")
+    def test_authorization_with_correct_email_and_without_password(self):
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+
+        assert self.auth_modal.set_auth_email(USER_LOGIN), "Unable to locate email field or paste data"
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
+
+        self.auth_modal.click_auth_submit()
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after submit")
+
+        error_text = self.auth_modal.get_auth_error_messages()
+        assert "Неверный логин или пароль." in error_text, f"Unexpected error text: {error_text}"
+
+    @allure.title("Modal window")
+    @allure.description("Checks that authorization fails when email is missing")
+    def test_authorization_without_email_and_with_correct_password(self):
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+
+        assert self.auth_modal.set_auth_password(USER_PASSWORD), "Unable to locate password field or paste data"
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
+
+        self.auth_modal.click_auth_submit()
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after submit")
+
+        error_text = self.auth_modal.get_auth_error_messages()
+        assert "Неверный логин или пароль." in error_text, f"Unexpected error text: {error_text}"
+
+    @allure.title("Modal window")
+    @allure.description("Verifies that the authorization is impossible with valid email and invalid password")
+    def test_authorization_with_correct_email_and_invalid_password(self, fake_user):
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+
+        assert self.auth_modal.set_auth_email(USER_LOGIN), "Unable to locate email field or paste data"
+        assert self.auth_modal.set_auth_password(fake_user.password), "Unable to locate password field or paste data"
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
+
+        self.auth_modal.click_auth_submit()
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after submit")
+
+        error_text = self.auth_modal.get_auth_error_messages()
+        assert "Неверный логин или пароль." in error_text, f"Unexpected error text: {error_text}"
+
+    @allure.title("Modal window")
+    @allure.description("Verifies that the authorization is impossible with invalid email and valid password")
+    def test_authorization_with_invalid_email_and_correct_password(self, fake_user):
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+
+        assert self.auth_modal.set_auth_email(fake_user.email), "Unable to locate email field or paste data"
+        assert self.auth_modal.set_auth_password(USER_PASSWORD), "Unable to locate password field or paste data"
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
+
+        self.auth_modal.click_auth_submit()
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after submit")
+
+        error_text = self.auth_modal.get_auth_error_messages()
+        assert "Неверный логин или пароль." in error_text, f"Unexpected error text: {error_text}"
+
+
+@allure.suite("Modal Window Tests")
+@allure.feature("Authorization")
+@allure.story("Form Behavior With Filling Mandatory Fields")
+@pytest.mark.usefixtures("open_auth_modal_class")
+@pytest.mark.parametrize("open_auth_modal_class", ["auth"], indirect=True)
+class TestAuthorizationFormPositiveCases:
+    main_page: MainPage
+    auth_modal: AuthModalComponent
+
+    EXPECTED_LOGGED_IN_BTN_TEXT = "ВЫЙТИ"
+
+    @allure.title("Modal window")
+    @allure.description("Checks that authorization successful with correct data")
+    def test_authorization_with_invalid_data(self):
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+
+        assert self.auth_modal.set_auth_email(USER_LOGIN), "Unable to locate email field or paste data"
+        assert self.auth_modal.set_auth_password(USER_PASSWORD), "Unable to locate password field or paste data"
+        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before submit")
+
+        self.auth_modal.click_auth_submit()
+
+        expected_text = [
+            f"Здравствуйте, {USER_FIRST_NAME} {USER_LAST_NAME}!",
+            "Спасибо за визит на наш сайт!",
+        ]
+        actual_text: list[str] = self.auth_modal.get_auth_successful_text()
+        assert actual_text == expected_text, (f"Unexpected message text: {actual_text}. "
+                                              f"Expected: {expected_text}")
+
+        self.auth_modal.modal_window_not_visible(timeout=3)
+
+        button_text = self.main_page.header_top.get_logged_in_text()
+
+        allure.attach(
+            self.main_page.driver.get_screenshot_as_png(),
+            name="screenshot_after_successful registration",
+            attachment_type=allure.attachment_type.PNG
+        )
+
+        assert button_text == self.EXPECTED_LOGGED_IN_BTN_TEXT, (
+            f"Error logging in! Actual login button text: {button_text}. "
+            f"Expected login button text: {self.EXPECTED_LOGGED_IN_BTN_TEXT}"
+        )
