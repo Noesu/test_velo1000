@@ -1,0 +1,113 @@
+[
+  {
+    "text": "Личные данные",
+    "href": "https://velo1000.ru/personal/private/",
+    "breadcrumbs": [
+      "Главная",
+      "Мой кабинет",
+      "Персональные данные"
+    ],
+    "title": "ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ",
+    "alert": null,
+    "source": "private",
+    "need_auth": false
+  },
+  {
+    "text": "Текущие заказы",
+    "href": "https://velo1000.ru/personal/orders/",
+    "breadcrumbs": [
+      "Главная",
+      "Мой кабинет",
+      "Мои заказы"
+    ],
+    "title": "МОИ ЗАКАЗЫ",
+    "alert": null,
+    "source": "orders",
+    "need_auth": false
+  },
+  {
+    "text": "История заказов",
+    "href": "https://velo1000.ru/personal/orders/?filter_history=Y",
+    "breadcrumbs": [
+      "Главная",
+      "Мой кабинет",
+      "Мои заказы"
+    ],
+    "title": "МОИ ЗАКАЗЫ",
+    "alert": null,
+    "source": "orders",
+    "need_auth": false
+  },
+  {
+    "text": "Магазины",
+    "href": "https://velo1000.ru/personal/shops/",
+    "breadcrumbs": [
+      "Главная",
+      "Магазины"
+    ],
+    "title": "МАГАЗИНЫ",
+    "alert": null,
+    "source": "shops",
+    "need_auth": false
+  },
+  {
+    "text": "FAQ",
+    "href": "https://velo1000.ru/personal/faq/",
+    "breadcrumbs": [
+      "Главная",
+      "Вопрос и ответ"
+    ],
+    "title": "ВОПРОС И ОТВЕТ",
+    "alert": null,
+    "source": "faq",
+    "need_auth": false
+  },
+  {
+    "text": "Способы оплаты/доставки",
+    "href": "https://velo1000.ru/personal/delivery/",
+    "breadcrumbs": [
+      "Главная",
+      "Способы оплаты/доставки"
+    ],
+    "title": "СПОСОБЫ ОПЛАТЫ/ДОСТАВКИ",
+    "alert": null,
+    "source": "delivery",
+    "need_auth": false
+  },
+  {
+    "text": "Магазины",
+    "href": "https://velo1000.ru/personal/shops/",
+    "breadcrumbs": [
+      "Главная",
+      "Магазины"
+    ],
+    "title": "МАГАЗИНЫ",
+    "alert": null,
+    "source": "shops",
+    "need_auth": false
+  },
+  {
+    "text": "Правила возврата",
+    "href": "https://velo1000.ru/personal/return_rules/",
+    "breadcrumbs": [
+      "Главная",
+      "Правила возврата"
+    ],
+    "title": "ПРАВИЛА ВОЗВРАТА",
+    "alert": null,
+    "source": "return_rules",
+    "need_auth": false
+  },
+  {
+    "text": "Контакты",
+    "href": "https://velo1000.ru/personal/contacts/",
+    "breadcrumbs": [
+      "Главная",
+      "Контакты"
+    ],
+    "title": "КОНТАКТЫ",
+    "alert": null,
+    "source": "contacts",
+    "need_auth": false
+  }
+]

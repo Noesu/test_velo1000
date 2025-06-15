@@ -18,7 +18,10 @@ class BasePage:
 
     @property
     def wait(self) -> WebDriverWait:
-        return WebDriverWait(self.driver, timeout=5)
+        return WebDriverWait(self.driver, timeout=3)
+
+    def get(self, url) -> None:
+        self.driver.get(url)
 
     def open(self) -> None:
         self.driver.get(BASE_URL)

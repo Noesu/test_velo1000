@@ -9,28 +9,28 @@ from pages.main_page import MainPage
 
 
 @pytest.fixture(scope="class")
-def open_auth_modal_class(request, main_page):
+def open_auth_modal_class(request, page):
     tab = request.param
     request.cls.tab = tab
-    main_page.header_top.click_login_button()
-    auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
+    page.header_top.click_login_button()
+    auth_modal = AuthModalComponent(page.driver, page.wait)
     if tab == "register":
         auth_modal.switch_modal_tab_to_registration()
-    request.cls.main_page = main_page
+    request.cls.page = page
     request.cls.auth_modal = auth_modal
 
 
 @pytest.fixture(scope="function")
-def open_auth_modal_function(request, main_page):
+def open_auth_modal_function(request, page):
     try:
-        existing_modal = AuthModalComponent(main_page.driver, main_page.wait)
+        existing_modal = AuthModalComponent(page.driver, page.wait)
         existing_modal.close_modal()
     except Exception:
         pass
-    main_page.header_top.click_login_button()
-    auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
+    page.header_top.click_login_button()
+    auth_modal = AuthModalComponent(page.driver, page.wait)
     auth_modal.switch_modal_tab_to_registration()
-    request.cls.main_page = main_page
+    request.cls.page = page
     request.cls.auth_modal = auth_modal
 
 
@@ -45,7 +45,7 @@ def attach_screenshot(modal: WebElement, name: str) -> None:
 @pytest.mark.usefixtures("open_auth_modal_class")
 @pytest.mark.parametrize("open_auth_modal_class", ["auth"], indirect=True)
 class TestAuthorizationTab:
-    main_page: MainPage
+    page: MainPage
     auth_modal: AuthModalComponent
 
     EXPECTED_AUTH_TAB_TITLE = "Авторизация"
@@ -155,7 +155,7 @@ class TestAuthorizationTab:
         assert self.auth_modal.set_auth_remember_me_checkbox(True) == True, "Unexpected checkbox status. Expected True"
 
         self.auth_modal.close_modal()
-        self.main_page.header_top.click_login_button()
+        self.page.header_top.click_login_button()
         attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after reopening")
         assert self.auth_modal.is_remember_me_checkbox_checked() == True, (
                 f"Unexpected checkbox status after modal reopened. Expected True")
@@ -218,7 +218,7 @@ class TestAuthorizationTab:
 @pytest.mark.usefixtures("open_auth_modal_class")
 @pytest.mark.parametrize("open_auth_modal_class", ["register"], indirect=True)
 class TestRegistrationTab:
-    main_page: MainPage
+    page: MainPage
     auth_modal: AuthModalComponent
 
     EXPECTED_REG_TAB_TITLE = "Регистрация"
@@ -363,7 +363,7 @@ class TestRegistrationTab:
 @pytest.mark.parametrize("open_auth_modal_class", ["auth", "register"], indirect=True)
 @pytest.mark.usefixtures("open_auth_modal_class")
 class TestModalClose:
-    main_page: MainPage
+    page: MainPage
     auth_modal: AuthModalComponent
     tab: str
 
@@ -371,7 +371,7 @@ class TestModalClose:
         allure.dynamic.title(f"Close button closes modal (tab: {self.tab})")
         self.auth_modal.close_modal()
         allure.attach(
-            self.main_page.driver.get_screenshot_as_png(),
+            self.page.driver.get_screenshot_as_png(),
             name="screenshot_after_close_button_click",
             attachment_type=allure.attachment_type.PNG
         )
@@ -383,7 +383,7 @@ class TestModalClose:
 @allure.story("Form Behavior Without Filling Mandatory Fields")
 @pytest.mark.usefixtures("open_auth_modal_function")
 class TestRegistrationFormNegativeCases:
-    main_page: MainPage
+    page: MainPage
     auth_modal: AuthModalComponent
 
     EXPECTED_AUTH_TAB_TITLE = "Регистрация"
@@ -434,7 +434,7 @@ class TestRegistrationFormNegativeCases:
 @allure.story("Form Behavior With Filling Mandatory Fields")
 @pytest.mark.usefixtures("open_auth_modal_function")
 class TestRegistrationFormPositiveCase:
-    main_page: MainPage
+    page: MainPage
     auth_modal: AuthModalComponent
 
     EXPECTED_LOGGED_IN_BTN_TEXT = "ВЫЙТИ"
@@ -462,10 +462,10 @@ class TestRegistrationFormPositiveCase:
 
         self.auth_modal.is_modal_window_not_visible(timeout=3)
 
-        button_text = self.main_page.header_top.get_logged_in_text()
+        button_text = self.page.header_top.get_logged_in_text()
 
         allure.attach(
-            self.main_page.driver.get_screenshot_as_png(),
+            self.page.driver.get_screenshot_as_png(),
             name="screenshot_after_successful registration",
             attachment_type=allure.attachment_type.PNG
         )
@@ -484,7 +484,7 @@ class TestRegistrationFormPositiveCase:
 class TestAuthorizationFormNegativeCases:
     """Negative test cases for authorization tab in modal window with various invalid credential combinations."""
 
-    main_page: MainPage
+    page: MainPage
     auth_modal: AuthModalComponent
 
     @allure.title("Modal window")
@@ -567,7 +567,7 @@ class TestAuthorizationFormNegativeCases:
 @pytest.mark.usefixtures("open_auth_modal_class")
 @pytest.mark.parametrize("open_auth_modal_class", ["auth"], indirect=True)
 class TestAuthorizationFormPositiveCases:
-    main_page: MainPage
+    page: MainPage
     auth_modal: AuthModalComponent
 
     EXPECTED_LOGGED_IN_BTN_TEXT = "ВЫЙТИ"
@@ -593,10 +593,10 @@ class TestAuthorizationFormPositiveCases:
 
         self.auth_modal.is_modal_window_not_visible(timeout=3)
 
-        button_text = self.main_page.header_top.get_logged_in_text()
+        button_text = self.page.header_top.get_logged_in_text()
 
         allure.attach(
-            self.main_page.driver.get_screenshot_as_png(),
+            self.page.driver.get_screenshot_as_png(),
             name="screenshot_after_successful registration",
             attachment_type=allure.attachment_type.PNG
         )

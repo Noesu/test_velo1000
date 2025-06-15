@@ -6,12 +6,13 @@ from pages.components.auth_modal import AuthModalComponent
 from utils.json_loader import load_testdata_json
 
 
+@allure.suite("Header Top Component Tests")
 @allure.feature("Smoke-tests")
 @allure.story("Top header")
 @allure.title("Top header visibility and correctness check")
-def test_top_header_components(main_page) -> None:
-    check_logo(main_page)
-    check_menu_items(main_page)
+def test_top_header_components(page) -> None:
+    check_logo(page)
+    check_menu_items(page)
 
 def check_logo(main_page):
     logo_src: str = main_page.header_top.get_logo_src()
@@ -61,38 +62,40 @@ def check_menu_items(main_page) -> None:
         )
 
 
+@allure.suite("Header Top Component Tests")
 @allure.feature("Smoke-tests")
 @allure.story("Search button")
 @allure.title("Test search bar opens with search button and closes with close button")
-def test_search_button(main_page) -> None:
+def test_search_button(page) -> None:
     with allure.step("Search button is present"):
-        check.is_true(main_page.header_top.search_button_present(), "Search button is not present")
+        check.is_true(page.header_top.search_button_present(), "Search button is not present")
 
     with allure.step("Search field is reachable"):
-        main_page.header_top.click_search_button()
-        check.is_true(main_page.search_engine.search_field_present(), "Search field is not reachable")
+        page.header_top.click_search_button()
+        check.is_true(page.search_engine.search_field_present(), "Search field is not reachable")
         allure.attach(
-            main_page.driver.get_screenshot_as_png(),
+            page.driver.get_screenshot_as_png(),
             name="screenshot_after_search_button_click",
             attachment_type=allure.attachment_type.PNG
         )
 
     with allure.step("Search close button is operable"):
         allure.attach(
-            main_page.driver.get_screenshot_as_png(),
+            page.driver.get_screenshot_as_png(),
             name="screenshot_before_cancel_search_button_click",
             attachment_type=allure.attachment_type.PNG
         )
-        main_page.search_engine.click_cancel_search_button()
-        assert not main_page.search_engine.search_field_present(), "Search field does not close"
+        page.search_engine.click_cancel_search_button()
+        assert not page.search_engine.search_field_present(), "Search field does not close"
 
 
+@allure.suite("Header Top Component Tests")
 @allure.feature("Smoke-tests")
 @allure.story("Profile menu")
 @allure.title("Test profile menu contains all necessary items")
-def test_profile_menu(main_page) -> None:
-    actual_profile_menu: list[tuple[str, str]] = main_page.header_top.get_profile_menu_items()
-    expected_profile_menu = load_testdata_json("expected_profile_menu.json")
+def test_profile_menu(page) -> None:
+    actual_profile_menu: list[tuple[str, str]] = page.header_top.get_profile_menu_items()
+    expected_profile_menu = load_testdata_json("expected_profile_menu_guest.json")
 
     expected_texts = [item["text"] for item in expected_profile_menu]
     expected_hrefs = {item["text"]: item["href"] for item in expected_profile_menu}
@@ -108,20 +111,15 @@ def test_profile_menu(main_page) -> None:
             attachment_type=allure.attachment_type.JSON
         )
 
-    # @allure.feature("Smoke-tests")
-    # @allure.story("Profile menu")
-    # @allure.title("Test profile menu links opens in guest mode")
-    # def test_profile_menu_links_for_guest_user(main_page)
-
-
+@allure.suite("Header Top Component Tests")
 @allure.feature("Smoke-tests")
 @allure.story("Authorization/registration modal")
 @allure.title("Modal window is shown after clicking login button")
-def test_login_button(main_page) -> None:
+def test_login_button(page) -> None:
     with allure.step("Modal window is showing up after login button click"):
-        main_page.header_top.click_login_button()
+        page.header_top.click_login_button()
 
-        auth_modal = AuthModalComponent(main_page.driver, main_page.wait)
+        auth_modal = AuthModalComponent(page.driver, page.wait)
         modal_window = auth_modal.get_modal_window()
 
         check.is_true(modal_window, "Modal window doesn't showing up")

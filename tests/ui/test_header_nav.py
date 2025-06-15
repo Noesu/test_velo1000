@@ -5,13 +5,14 @@ import pytest_check as check
 from utils.json_loader import load_testdata_json
 
 
+@allure.suite("Header Nav Component Tests")
 @allure.feature("Smoke-tests")
 @allure.story("Navigation header")
 @allure.title("Main page navigation header visibility and correctness check")
-def test_nav_header_components(main_page) -> None:
-    check_nav_header_logo(main_page)
-    check_nav_header_menu_items(main_page)
-    check_nav_header_submenu_items(main_page)
+def test_nav_header_components(page) -> None:
+    check_nav_header_logo(page)
+    check_nav_header_menu_items(page)
+    check_nav_header_submenu_items(page)
 
 def check_nav_header_logo(main_page):
     logo_src: str = main_page.header_nav.get_navigation_menu_logo_src()
