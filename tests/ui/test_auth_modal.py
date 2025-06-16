@@ -462,7 +462,7 @@ class TestRegistrationFormPositiveCase:
 
         self.auth_modal.is_modal_window_not_visible(timeout=3)
 
-        button_text = self.page.header_top.get_logged_in_text()
+        button_text = self.page.header_top.get_logged_in_btn_text()
 
         allure.attach(
             self.page.driver.get_screenshot_as_png(),
@@ -570,8 +570,6 @@ class TestAuthorizationFormPositiveCases:
     page: MainPage
     auth_modal: AuthModalComponent
 
-    EXPECTED_LOGGED_IN_BTN_TEXT = "ВЫЙТИ"
-
     @allure.title("Modal window")
     @allure.description("Checks that authorization successful with correct data")
     def test_authorization_with_correct_data(self):
@@ -593,15 +591,13 @@ class TestAuthorizationFormPositiveCases:
 
         self.auth_modal.is_modal_window_not_visible(timeout=3)
 
-        button_text = self.page.header_top.get_logged_in_text()
-
         allure.attach(
             self.page.driver.get_screenshot_as_png(),
             name="screenshot_after_successful registration",
             attachment_type=allure.attachment_type.PNG
         )
 
-        assert button_text == self.EXPECTED_LOGGED_IN_BTN_TEXT, (
-            f"Error logging in! Actual login button text: {button_text}. "
-            f"Expected login button text: {self.EXPECTED_LOGGED_IN_BTN_TEXT}"
+        assert self.page.header_top.is_user_authorized(), (
+            f"Authorization error! Actual login button text: {self.page.header_top.get_logged_in_btn_text()}. "
+            f"Expected login button text: {self.page.header_top.EXPECTED_LOGGED_IN_BTN_TEXT}"
         )

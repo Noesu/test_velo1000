@@ -16,6 +16,7 @@ class HeaderTop:
     PROFILE_MENU_ITEMS = (By.CSS_SELECTOR, "div.button-header.button-profile .profile-popup__link")
     LOGIN_BUTTON = (By.CSS_SELECTOR, "div.button-header.button-acc")
     LOGGED_IN = (By.CSS_SELECTOR, ".button-header.button-acc span")
+    EXPECTED_LOGGED_IN_BTN_TEXT = "ВЫЙТИ"
 
     def __init__(self, driver, wait) -> None:
         self.driver = driver
@@ -92,12 +93,20 @@ class HeaderTop:
         except TimeoutException:
             return []
 
-    def get_logged_in_text(self) -> Optional[str]:
+    def get_logged_in_btn_text(self) -> Optional[str]:
         try:
             element: WebElement = self.wait.until(EC.presence_of_element_located(self.LOGGED_IN))
             return element.text
         except TimeoutException:
             return None
+
+    def is_user_authorized(self) -> bool:
+        try:
+            element: WebElement = self.wait.until(EC.presence_of_element_located(self.LOGGED_IN))
+            return element.text == self.EXPECTED_LOGGED_IN_BTN_TEXT
+        except TimeoutException:
+            return False
+
 
     def click_login_button(self):
         login_button: WebElement = self.wait.until(EC.element_to_be_clickable(self.LOGIN_BUTTON))

@@ -1,6 +1,8 @@
 from abc import ABC
 from typing import Optional
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common import TimeoutException
@@ -11,8 +13,8 @@ class BaseProfileMenuPage(ABC):
     ALERT = (By.CSS_SELECTOR, "div.alert-danger")
 
     def __init__(self, driver, wait) -> None:
-        self.driver = driver
-        self.wait = wait
+        self.driver: WebDriver = driver
+        self.wait: WebDriverWait = wait
 
     def get_breadcrumbs_text(self) -> list[str]:
         elements: list[WebElement] = self.wait.until(EC.visibility_of_all_elements_located(self.BREADCRUMBS))

@@ -30,8 +30,8 @@ PAGE_CLASS_MAPPING = {
     "contacts": ContactsPage,
 }
 
-def attach_page_screenshot(main_page, name):
-    allure.attach(main_page.driver.get_screenshot_as_png(), name=name, attachment_type=allure.attachment_type.PNG)
+def attach_page_screenshot(page, name):
+    allure.attach(page.driver.get_screenshot_as_png(), name=name, attachment_type=allure.attachment_type.PNG)
 
 def resolve_page(source: str, driver, wait):
     page_class = PAGE_CLASS_MAPPING.get(source)
