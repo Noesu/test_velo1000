@@ -1,11 +1,11 @@
 import allure
 import pytest
-from selenium.webdriver.remote.webelement import WebElement
 
-from pages.authorization_page import AuthorizationPage
-
-from pages.main_page import MainPage
 from config.settings import USER_LOGIN, USER_PASSWORD
+from pages.authorization_page import AuthorizationPage
+from pages.main_page import MainPage
+from utils.allure import attach_screenshot, attach_text
+
 
 page_url = "https://velo1000.ru/personal/"
 
@@ -13,18 +13,6 @@ page_url = "https://velo1000.ru/personal/"
 def auth_page(page):
     page.get(page_url)
     return AuthorizationPage(page.driver, page.wait)
-
-def attach_text(text: str, name: str) -> None:
-    """Attaches a text to Allure report."""
-    allure.attach(text, name=name, attachment_type=allure.attachment_type.TEXT)
-
-def attach_element_screenshot(element: WebElement, name: str = "element_screenshot") -> None:
-    """Attaches a screenshot of the WebElement to Allure report."""
-    allure.attach(element.screenshot_as_png, name=name, attachment_type=allure.attachment_type.PNG)
-
-def attach_screenshot(driver, name: str = "page_screenshot") -> None:
-    """Attaches a page screenshot to Allure report."""
-    allure.attach(driver.get_screenshot_as_png(), name=name, attachment_type=allure.attachment_type.PNG)
 
 
 @allure.suite("Separate Pages")

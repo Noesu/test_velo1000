@@ -1,8 +1,8 @@
 import allure
-import json
 import pytest_check as check
 
 from pages.components.auth_modal import AuthModalComponent
+from utils.allure import attach_text, attach_json, attach_image, attach_screenshot, attach_element_screenshot
 from utils.json_loader import load_testdata_json
 
 
@@ -20,29 +20,17 @@ def check_logo(main_page):
     logo_image: bytes = main_page.header_top.download_logo_as_bytes(logo_src)
 
     with allure.step("Website logo present"):
-        allure.attach(
-            logo_image,
-            name="logo_image",
-            attachment_type=allure.attachment_type.PNG
-        )
+        attach_image(logo_image, "Logo image")
         check.is_true(main_page.header_top.logo_is_visible(), "Website logo is not visible")
 
     with allure.step("Website logo has correct path"):
-        allure.attach(
-            logo_src,
-            name="actual_logo_src",
-            attachment_type=allure.attachment_type.TEXT
-        )
+        attach_text(logo_src, "actual logo src")
         check.is_true(logo_src.endswith("/local/templates/velo1000/images/logo.png"),
                       f"Unexpected logo src: {logo_src}"
                       )
 
     with allure.step("Website logo has correct link"):
-        allure.attach(
-            logo_link,
-            name="actual_logo_link",
-            attachment_type=allure.attachment_type.TEXT
-        )
+        attach_text(logo_link, "actual logo link")
         check.equal(logo_link, main_page.base_url, f"Unexpected logo link: {logo_link}")
 
 
@@ -55,11 +43,7 @@ def check_menu_items(main_page) -> None:
             if check.is_in(text, expected_top_header_items, f"Unexpected top header menu item: {text}"):
                 expected_url = expected_top_header_items[text]
                 check.is_true(href.endswith(expected_url), f"Unexpected top header url: {href}")
-        allure.attach(
-            json.dumps(actual_top_header_menu, ensure_ascii=False, indent=2),
-            name="actual_top_header_menu",
-            attachment_type=allure.attachment_type.JSON
-        )
+        attach_json(actual_top_header_menu, "actual top header menu")
 
 
 @allure.suite("Header Top Component Tests")
@@ -73,18 +57,10 @@ def test_search_button(page) -> None:
     with allure.step("Search field is reachable"):
         page.header_top.click_search_button()
         check.is_true(page.search_engine.search_field_present(), "Search field is not reachable")
-        allure.attach(
-            page.driver.get_screenshot_as_png(),
-            name="screenshot_after_search_button_click",
-            attachment_type=allure.attachment_type.PNG
-        )
+        attach_screenshot(page.driver, "screenshot after search button click")
 
     with allure.step("Search close button is operable"):
-        allure.attach(
-            page.driver.get_screenshot_as_png(),
-            name="screenshot_before_cancel_search_button_click",
-            attachment_type=allure.attachment_type.PNG
-        )
+        attach_screenshot(page.driver, "screenshot before cancel search button click")
         page.search_engine.click_cancel_search_button()
         assert not page.search_engine.search_field_present(), "Search field does not close"
 
@@ -105,11 +81,8 @@ def test_profile_menu(page) -> None:
             if check.is_in(text, expected_texts, f"Unexpected top header menu item: {text}"):
                 expected_href = expected_hrefs[text]
                 check.is_true(href.endswith(expected_href), f"Unexpected top header url: {href}")
-        allure.attach(
-            json.dumps(actual_profile_menu, ensure_ascii=False, indent=2),
-            name="actual_top_header_menu",
-            attachment_type=allure.attachment_type.JSON
-        )
+        attach_json(actual_profile_menu, "actual top header menu")
+
 
 @allure.suite("Header Top Component Tests")
 @allure.feature("Smoke-tests")
@@ -118,16 +91,10 @@ def test_profile_menu(page) -> None:
 def test_login_button(page) -> None:
     with allure.step("Modal window is showing up after login button click"):
         page.header_top.click_login_button()
-
         auth_modal = AuthModalComponent(page.driver, page.wait)
         modal_window = auth_modal.get_modal_window()
-
+        attach_element_screenshot(modal_window, "modal_window")
         check.is_true(modal_window, "Modal window doesn't showing up")
 
-        allure.attach(
-            modal_window.screenshot_as_png,
-            name="modal_window",
-            attachment_type=allure.attachment_type.PNG
-        )
 
 

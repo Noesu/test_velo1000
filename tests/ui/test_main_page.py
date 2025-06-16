@@ -2,6 +2,7 @@ import allure
 import pytest_check as check
 
 from pages.main_page import MainPage
+from utils.allure import attach_screenshot
 
 
 @allure.suite("Main Page Tests")
@@ -13,8 +14,4 @@ def test_main_page_loads(page: MainPage) -> None:
     with allure.step("Page title check"):
         check.not_equal(page_title, "", "Page title is empty")
         check.is_in("Velo1000", page_title, "Page title doesn't contain website name")
-    allure.attach(
-        page.driver.get_screenshot_as_png(),
-        name="screenshot_after_load",
-        attachment_type=allure.attachment_type.PNG
-    )
+    attach_screenshot(page.driver, "screenshot after load")

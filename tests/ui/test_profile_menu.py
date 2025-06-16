@@ -9,6 +9,7 @@ from pages.delivery_page import DeliveryPage
 from pages.faq_page import FAQPage
 from pages.return_rules_page import ReturnRulesPage
 from pages.shops_page import ShopsPage
+from utils.allure import attach_screenshot, attach_text
 from utils.json_loader import load_testdata_json
 
 menu_items_guest = load_testdata_json("expected_profile_menu_guest.json")
@@ -30,8 +31,8 @@ PAGE_CLASS_MAPPING = {
     "contacts": ContactsPage,
 }
 
-def attach_page_screenshot(page, name):
-    allure.attach(page.driver.get_screenshot_as_png(), name=name, attachment_type=allure.attachment_type.PNG)
+# def attach_page_screenshot(page, name):
+#     allure.attach(page.driver.get_screenshot_as_png(), name=name, attachment_type=allure.attachment_type.PNG)
 
 def resolve_page(source: str, driver, wait):
     page_class = PAGE_CLASS_MAPPING.get(source)
@@ -50,11 +51,12 @@ def test_profile_menu(page, menu_item, request):
 
     page.get(menu_item["href"])
     result = resolve_page(menu_item["source"], page.driver, page.wait)
-    attach_page_screenshot(page, "Opened page")
+    attach_screenshot(page, "Opened page")
 
     with allure.step("Breadcrumbs are valid on target page"):
         actual_breadcrumbs: list[str] = result.get_breadcrumbs_text()
         expected_breadcrumbs: list[str] = menu_item["breadcrumbs"]
+        attach_text(' > '.join(actual_breadcrumbs), "Actual breadcrumbs")
         check.equal(actual_breadcrumbs, expected_breadcrumbs, (
             f"Unexpected breadcrumbs: {' > '.join(actual_breadcrumbs)} "
             f"Expected: {' > '.join(expected_breadcrumbs)}")
@@ -63,6 +65,7 @@ def test_profile_menu(page, menu_item, request):
     with allure.step("Title is valid on target page"):
         actual_title: str = result.get_page_title()
         expected_title: str = menu_item["title"]
+        attach_text(actual_title, "Actual title")
         check.equal(actual_title, expected_title, (
             f"Unexpected title: {actual_title}. "
             f"Expected: {expected_title}")
@@ -71,6 +74,8 @@ def test_profile_menu(page, menu_item, request):
     with allure.step("Alert is valid or not present on target page"):
         expected_alert: Optional[str] = menu_item["alert"]
         actual_alert: Optional[str] = result.get_alert_text()
+        if actual_alert:
+            attach_text(actual_alert, "Actual alert")
         check.equal(expected_alert, actual_alert, (
             f"Unexpected alert: {actual_alert}. "
             f"Expected: {expected_alert}")
