@@ -31,9 +31,6 @@ PAGE_CLASS_MAPPING = {
     "contacts": ContactsPage,
 }
 
-# def attach_page_screenshot(page, name):
-#     allure.attach(page.driver.get_screenshot_as_png(), name=name, attachment_type=allure.attachment_type.PNG)
-
 def resolve_page(source: str, driver, wait):
     page_class = PAGE_CLASS_MAPPING.get(source)
     if page_class is None:
@@ -51,7 +48,7 @@ def test_profile_menu(page, menu_item, request):
 
     page.get(menu_item["href"])
     result = resolve_page(menu_item["source"], page.driver, page.wait)
-    attach_screenshot(page, "Opened page")
+    attach_screenshot(page.driver, "Opened page")
 
     with allure.step("Breadcrumbs are valid on target page"):
         actual_breadcrumbs: list[str] = result.get_breadcrumbs_text()

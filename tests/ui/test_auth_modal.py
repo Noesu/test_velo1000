@@ -111,20 +111,20 @@ class TestAuthorizationTab:
     @allure.description("Checks whether the password visibility toggle correctly shows and hides the password")
     def test_password_field_visibility_btn_working(self, fake_user):
         self.auth_modal.set_auth_password(fake_user.password)
-        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot with inserted password")
+        attach_element_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot with inserted password")
         assert not self.auth_modal.is_auth_password_visible(), (
             "Password should be hidden by default, but it's visible"
         )
 
         self.auth_modal.click_auth_password_visibility_btn()
-        attach_screenshot(self.auth_modal.get_modal_window(),
+        attach_element_screenshot(self.auth_modal.get_modal_window(),
                           "Modal screenshot after visibility toggle clicked")
         assert self.auth_modal.is_auth_password_visible(), (
             "Password should be visible after clicking the visibility toggle, but it's still hidden"
         )
 
         self.auth_modal.click_auth_password_visibility_btn()
-        attach_screenshot(self.auth_modal.get_modal_window(),
+        attach_element_screenshot(self.auth_modal.get_modal_window(),
                           "Modal screenshot after visibility toggle clicked again")
         assert not self.auth_modal.is_auth_password_visible(), (
             "Password should be hidden again after toggling, but it's still visible"
@@ -138,16 +138,16 @@ class TestAuthorizationTab:
     @allure.title("Remember me checkbox functionality")
     @allure.description("Click remember me checkbox and check its status after reopening modal")
     def test_remember_me_checkbox_working(self):
-        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
+        attach_element_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot before interaction")
         assert self.auth_modal.is_remember_me_checkbox_checked() == False, "Unexpected checkbox status. Expected False"
 
-        attach_screenshot(self.auth_modal.get_modal_window(), (
+        attach_element_screenshot(self.auth_modal.get_modal_window(), (
             "Modal screenshot after remember me checkbox switch on"))
         assert self.auth_modal.set_auth_remember_me_checkbox(True) == True, "Unexpected checkbox status. Expected True"
 
         self.auth_modal.close_modal()
         self.page.header_top.click_login_button()
-        attach_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after reopening")
+        attach_element_screenshot(self.auth_modal.get_modal_window(), "Modal screenshot after reopening")
         assert self.auth_modal.is_remember_me_checkbox_checked() == True, (
                 f"Unexpected checkbox status after modal reopened. Expected True")
 
@@ -212,7 +212,7 @@ class TestRegistrationTab:
     @allure.description("Verifies that the login modal is opened and visible to the user")
     def test_modal_is_displayed(self):
         modal_registration_tab = self.auth_modal.get_modal_window()
-        attach_screenshot(modal_registration_tab, "Modal screenshot before submit")
+        attach_element_screenshot(modal_registration_tab, "Modal screenshot before submit")
         assert modal_registration_tab, "Modal doesn't showing up after switching to registration tab"
 
     @allure.title("Title")
